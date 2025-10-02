@@ -1,4 +1,3 @@
-// models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
@@ -6,14 +5,22 @@ const productSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
     },
     description: String,
     price: {
       type: Number,
       required: true,
+      min: 0,
     },
     category: String,
-    image: String,
+    images: [
+      {
+        url: String,
+        publicId: String,
+        altText: String,
+      },
+    ],
     stock: {
       type: Number,
       default: 0,

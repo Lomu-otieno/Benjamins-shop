@@ -221,6 +221,44 @@ router.delete("/:id", adminAuth, async (req, res) => {
   }
 });
 
+// DELETE /api/products/:productId/images/:imageId - Delete specific product image
+router.delete("/:productId/images/:imageId", adminAuth, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const imageIndex = product.images.findIndex(
+      (img) => img._id.toString() === req.params.imageId
+    );
+
+    if (imageIndex === -1) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    const imageToDelete = product.images[imageIndex];
+
+    // Delete from Cloudinary
+    const { deleteFromCloudinary } = await import(
+      "../utils/cloudinaryUpload.js"
+    );
+    await deleteFromCloudinary(imageToDelete.publicId);
+
+    // Remove from product images array
+    product.images.splice(imageIndex, 1);
+    await product.save();
+
+    res.json({
+      message: "Image deleted successfully",
+      product,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/products/admin/all - Get all products including inactive (Admin only)
 router.get("/admin/all", adminAuth, async (req, res) => {
   try {

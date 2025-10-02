@@ -53,14 +53,13 @@ router.get("/:id", async (req, res) => {
 // ================= ADMIN ROUTES ================= //
 
 // POST /api/products - Create new product (Admin only)
-router.post("/", adminAuth, async (req, res) => {
+router.post("/", adminAuth, upload.single("image"), async (req, res) => {
   try {
     const {
       name,
       description,
       price,
       category,
-      image,
       stock,
       isActive = true,
     } = req.body;
@@ -72,12 +71,27 @@ router.post("/", adminAuth, async (req, res) => {
       });
     }
 
+    let images = [];
+
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer,
+        "products"
+      );
+      images.push({
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        altText: name,
+      });
+    }
+
     const product = new Product({
       name,
       description,
       price,
       category,
-      image,
+      images,
       stock: stock || 0,
       isActive,
     });
@@ -91,7 +105,6 @@ router.post("/", adminAuth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 // PUT /api/products/:id - Update product (Admin only)
 router.put("/:id", adminAuth, async (req, res) => {
   try {

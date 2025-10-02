@@ -1,11 +1,11 @@
 {
   "name": "benjamin",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
+    "start": "node source/server.js",
+    "dev": "nodemon source/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

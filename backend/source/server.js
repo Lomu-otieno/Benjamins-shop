@@ -29,7 +29,7 @@ app.use("/api/guest", guestRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "Shop API is running" });
+  res.json({ status: "OK", message: "Benjamis API is running" });
 });
 
 // Error handling middleware
@@ -39,7 +39,7 @@ app.use((error, req, res, next) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 

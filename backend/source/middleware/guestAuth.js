@@ -1,4 +1,3 @@
-// middleware/guestAuth.js
 import GuestSession from "../models/GuestSession.js";
 
 const guestAuth = async (req, res, next) => {

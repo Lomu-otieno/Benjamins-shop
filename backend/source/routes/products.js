@@ -106,22 +106,35 @@ router.post("/", adminAuth, upload.single("image"), async (req, res) => {
   }
 });
 // PUT /api/products/:id - Update product (Admin only)
-router.put("/:id", adminAuth, async (req, res) => {
+router.put("/:id", adminAuth, upload.single("image"), async (req, res) => {
   try {
-    const { name, description, price, category, image, stock, isActive } =
-      req.body;
+    const { name, description, price, category, stock, isActive } = req.body;
 
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Update only provided fields
+    // Handle new image upload if provided
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(
+        req.file.buffer,
+        "products"
+      );
+
+      // Add new image to images array
+      product.images.push({
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        altText: name || product.name,
+      });
+    }
+
+    // Update other fields
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
     if (price !== undefined) product.price = price;
     if (category !== undefined) product.category = category;
-    if (image !== undefined) product.image = image;
     if (stock !== undefined) product.stock = stock;
     if (isActive !== undefined) product.isActive = isActive;
 
@@ -181,15 +194,27 @@ router.patch("/:id", adminAuth, async (req, res) => {
 // DELETE /api/products/:id - Delete product (Admin only)
 router.delete("/:id", adminAuth, async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
+    // Delete images from Cloudinary
+    const { deleteFromCloudinary } = await import(
+      "../utils/cloudinaryUpload.js"
+    );
+    const deletePromises = product.images.map((image) =>
+      deleteFromCloudinary(image.publicId)
+    );
+
+    await Promise.all(deletePromises);
+
+    // Delete product from database
+    await Product.findByIdAndDelete(req.params.id);
+
     res.json({
-      message: "Product deleted successfully",
-      product,
+      message: "Product and associated images deleted successfully",
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

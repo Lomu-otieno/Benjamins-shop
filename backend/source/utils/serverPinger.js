@@ -39,7 +39,7 @@ class ServerPinger {
     return success;
   };
 
-  start(intervalMinutes = 10) {
+  start(intervalMinutes = 1) {
     console.log(`Starting server pinger...`);
 
     // Ping immediately

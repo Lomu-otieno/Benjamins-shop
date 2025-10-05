@@ -62,7 +62,7 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  serverPinger.start(1);
+  serverPinger.start(10);
 });
 
 export default app;

@@ -2,7 +2,9 @@
 import axios from "axios";
 
 class ServerPinger {
-  constructor(baseURL = "http://localhost:5001") {
+  constructor(
+    baseURL = ["http://localhost:5001", "https://benjamins-shop.onrender.com"]
+  ) {
     this.baseURL = baseURL;
     this.intervalId = null;
   }

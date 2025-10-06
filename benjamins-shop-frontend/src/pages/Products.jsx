@@ -25,6 +25,7 @@ const Products = () => {
       setLoading(true);
       setError(null);
       const response = await productsAPI.getAll(filters);
+      console.log("Products data:", response.data); // Debug log
       setProducts(response.data.products);
       setPagination({
         totalPages: response.data.totalPages,

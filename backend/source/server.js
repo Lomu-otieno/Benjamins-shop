@@ -28,7 +28,12 @@ app.use(
       process.env.SERVER_URI,
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Guest-Session-Id",
+      "X-Requested-With",
+    ],
     credentials: true,
     optionsSuccessStatus: 200,
   })

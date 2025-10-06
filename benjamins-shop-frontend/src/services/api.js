@@ -6,7 +6,8 @@ const API_BASE = "https://benjamins-shop.onrender.com/api";
 // Create axios instance with guest session handling
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 10000, // 10 second timeout
+  timeout: 15000, // Increased timeout
+  withCredentials: false, // Important for CORS
 });
 
 // Add guest session ID to all requests
@@ -15,15 +16,45 @@ api.interceptors.request.use((config) => {
   if (sessionId) {
     config.headers["X-Guest-Session-Id"] = sessionId;
   }
+
+  // Log request for debugging
+  console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
 
-// Response interceptor for error handling
+// Enhanced response interceptor for better error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Success: ${response.status} ${response.config.url}`);
+    return response;
+  },
   (error) => {
-    console.error("API Error:", error.response?.data || error.message);
-    return Promise.reject(error);
+    let errorMessage = "An unexpected error occurred";
+
+    if (error.code === "ECONNREFUSED") {
+      errorMessage =
+        "Cannot connect to server. Please check if the backend is running.";
+    } else if (error.code === "NETWORK_ERROR") {
+      errorMessage = "Network error. Please check your internet connection.";
+    } else if (error.response) {
+      // Server responded with error status
+      errorMessage =
+        error.response.data?.error || `Server error: ${error.response.status}`;
+    } else if (error.request) {
+      // Request made but no response received
+      errorMessage = "No response from server. The backend might be down.";
+    } else {
+      errorMessage = error.message;
+    }
+
+    console.error("❌ API Error:", {
+      message: errorMessage,
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+
+    return Promise.reject(new Error(errorMessage));
   }
 );
 

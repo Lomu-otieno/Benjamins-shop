@@ -1,3 +1,4 @@
+// src/services/api.js
 import axios from "axios";
 
 const API_BASE = "https://benjamins-shop.onrender.com/api";
@@ -5,6 +6,7 @@ const API_BASE = "https://benjamins-shop.onrender.com/api";
 // Create axios instance with guest session handling
 const api = axios.create({
   baseURL: API_BASE,
+  timeout: 10000, // 10 second timeout
 });
 
 // Add guest session ID to all requests
@@ -15,6 +17,15 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
 // Products API
 export const productsAPI = {
@@ -49,19 +60,6 @@ export const ordersAPI = {
 // Guest API
 export const guestAPI = {
   getSession: () => api.get("/guest/session"),
-};
-
-// Upload API
-export const uploadAPI = {
-  uploadImage: (formData) =>
-    api.post("/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  uploadMultiple: (formData) =>
-    api.post("/upload/multiple", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  deleteImage: (publicId) => api.delete(`/upload/${publicId}`),
 };
 
 export default api;

@@ -23,7 +23,7 @@ app.use(
   cors({
     origin: [
       process.env.LOCALHOST,
-      process.env.FRONTEND_URL,
+      process.env.FRONTEND_URI,
       process.env.PASSWORD_URI,
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],

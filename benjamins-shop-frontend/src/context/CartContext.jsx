@@ -25,7 +25,8 @@ const cartReducer = (state, action) => {
   }
 };
 
-export const useCart = () => {
+// Create a custom hook for using cart context
+const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error("useCart must be used within a CartProvider");
@@ -33,7 +34,8 @@ export const useCart = () => {
   return context;
 };
 
-export const CartProvider = ({ children }) => {
+// Export the provider component separately
+const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     loading: false,
@@ -123,3 +125,5 @@ export const CartProvider = ({ children }) => {
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
+
+export { CartProvider, useCart };

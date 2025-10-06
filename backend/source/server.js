@@ -25,6 +25,7 @@ app.use(
       process.env.LOCALHOST,
       process.env.FRONTEND_URI,
       process.env.PASSWORD_URI,
+      process.env.SERVER_URI,
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

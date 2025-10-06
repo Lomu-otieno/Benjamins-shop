@@ -1,9 +1,11 @@
+// src/pages/Cart.jsx
 import React from "react";
-import { Link } from "react-router-dom";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
 const Cart = () => {
+  const navigate = useNavigate();
   const { items, updateQuantity, removeFromCart, getCartTotal, loading } =
     useCart();
 
@@ -16,26 +18,39 @@ const Cart = () => {
   };
 
   const handleRemove = async (productId) => {
-    try {
-      await removeFromCart(productId);
-    } catch (error) {
-      alert("Failed to remove item");
+    if (
+      window.confirm(
+        "Are you sure you want to remove this item from your cart?"
+      )
+    ) {
+      try {
+        await removeFromCart(productId);
+      } catch (error) {
+        alert("Failed to remove item");
+      }
     }
   };
 
   if (loading) {
-    return <div className="loading">Loading cart...</div>;
+    return (
+      <div className="cart-page">
+        <div className="container">
+          <div className="loading">Loading cart...</div>
+        </div>
+      </div>
+    );
   }
 
   if (items.length === 0) {
     return (
       <div className="cart-page">
         <div className="container">
-          <h1>Shopping Cart</h1>
           <div className="empty-cart">
-            <p>Your cart is empty</p>
+            <ShoppingBag size={64} color="#6b7280" />
+            <h2>Your cart is empty</h2>
+            <p>Browse our products and add some items to your cart.</p>
             <Link to="/products" className="btn btn-primary">
-              Continue Shopping
+              Start Shopping
             </Link>
           </div>
         </div>
@@ -46,63 +61,99 @@ const Cart = () => {
   return (
     <div className="cart-page">
       <div className="container">
-        <h1>Shopping Cart</h1>
-
-        <div className="cart-items">
-          {items.map((item) => (
-            <div key={item.product._id} className="cart-item">
-              <div className="item-image">
-                <img
-                  src={item.product.images?.[0]?.url || "/placeholder.jpg"}
-                  alt={item.product.name}
-                />
-              </div>
-
-              <div className="item-details">
-                <h3>{item.product.name}</h3>
-                <p className="item-price">${item.product.price}</p>
-              </div>
-
-              <div className="quantity-controls">
-                <button
-                  onClick={() =>
-                    handleQuantityChange(item.product._id, item.quantity - 1)
-                  }
-                  disabled={item.quantity <= 1}
-                >
-                  <Minus size={16} />
-                </button>
-                <span>{item.quantity}</span>
-                <button
-                  onClick={() =>
-                    handleQuantityChange(item.product._id, item.quantity + 1)
-                  }
-                >
-                  <Plus size={16} />
-                </button>
-              </div>
-
-              <div className="item-total">
-                ${(item.product.price * item.quantity).toFixed(2)}
-              </div>
-
-              <button
-                className="remove-btn"
-                onClick={() => handleRemove(item.product._id)}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
+        <div className="cart-header">
+          <h1>Shopping Cart</h1>
+          <p>
+            {items.length} {items.length === 1 ? "item" : "items"} in your cart
+          </p>
         </div>
 
-        <div className="cart-summary">
-          <div className="total">
-            <strong>Total: ${getCartTotal().toFixed(2)}</strong>
+        <div className="cart-content">
+          <div className="cart-items">
+            {items.map((item) => (
+              <div key={item.product?._id} className="cart-item">
+                <div className="item-image">
+                  <img
+                    src={item.product?.images?.[0]?.url || "/placeholder.jpg"}
+                    alt={item.product?.name}
+                  />
+                </div>
+
+                <div className="item-details">
+                  <h3>{item.product?.name}</h3>
+                  <p className="item-price">${item.product?.price}</p>
+                  {item.product?.stock < 5 && item.product?.stock > 0 && (
+                    <p className="low-stock">
+                      Only {item.product.stock} left in stock!
+                    </p>
+                  )}
+                </div>
+
+                <div className="quantity-controls">
+                  <button
+                    onClick={() =>
+                      handleQuantityChange(item.product?._id, item.quantity - 1)
+                    }
+                    disabled={item.quantity <= 1}
+                    className="quantity-btn"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <span className="quantity-display">{item.quantity}</span>
+                  <button
+                    onClick={() =>
+                      handleQuantityChange(item.product?._id, item.quantity + 1)
+                    }
+                    disabled={item.quantity >= (item.product?.stock || 0)}
+                    className="quantity-btn"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <div className="item-total">
+                  ${((item.product?.price || 0) * item.quantity).toFixed(2)}
+                </div>
+
+                <button
+                  className="remove-btn"
+                  onClick={() => handleRemove(item.product?._id)}
+                  title="Remove item"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
           </div>
-          <Link to="/checkout" className="btn btn-primary">
-            Proceed to Checkout
-          </Link>
+
+          <div className="cart-summary">
+            <h3>Order Summary</h3>
+            <div className="summary-row">
+              <span>Subtotal:</span>
+              <span>${getCartTotal().toFixed(2)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Shipping:</span>
+              <span>Free</span>
+            </div>
+            <div className="summary-row total">
+              <span>Total:</span>
+              <span>${getCartTotal().toFixed(2)}</span>
+            </div>
+
+            <div className="cart-actions">
+              <Link to="/checkout" className="btn btn-primary btn-large">
+                Proceed to Checkout
+              </Link>
+              <button
+                onClick={() => navigate("/products")}
+                className="btn btn-outline"
+              >
+                <ArrowLeft size={16} />
+                Continue Shopping
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

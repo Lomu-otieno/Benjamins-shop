@@ -1,3 +1,4 @@
+// src/pages/Products.jsx
 import React, { useState, useEffect } from "react";
 import { productsAPI } from "../services/api";
 import ProductCard from "../components/ProductCard";
@@ -6,6 +7,7 @@ import SearchFilters from "../components/SearchFilters";
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     search: "",
     category: "",
@@ -21,6 +23,7 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await productsAPI.getAll(filters);
       setProducts(response.data.products);
       setPagination({
@@ -28,8 +31,9 @@ const Products = () => {
         currentPage: response.data.currentPage,
         total: response.data.total,
       });
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
+    } catch (err) {
+      setError("Failed to load products. Please try again.");
+      console.error("Error fetching products:", err);
     } finally {
       setLoading(false);
     }
@@ -44,13 +48,28 @@ const Products = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading products...</div>;
+    return (
+      <div className="products-page">
+        <div className="container">
+          <div className="loading">Loading products...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="products-page">
       <div className="container">
         <h1>Our Products</h1>
+
+        {error && (
+          <div className="error-message">
+            {error}
+            <button onClick={fetchProducts} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        )}
 
         <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 
@@ -60,7 +79,7 @@ const Products = () => {
           ))}
         </div>
 
-        {products.length === 0 && (
+        {products.length === 0 && !error && (
           <div className="no-products">
             <p>No products found matching your criteria.</p>
           </div>
@@ -71,17 +90,19 @@ const Products = () => {
             <button
               disabled={filters.page === 1}
               onClick={() => handlePageChange(filters.page - 1)}
+              className="pagination-btn"
             >
               Previous
             </button>
 
-            <span>
+            <span className="pagination-info">
               Page {filters.page} of {pagination.totalPages}
             </span>
 
             <button
               disabled={filters.page === pagination.totalPages}
               onClick={() => handlePageChange(filters.page + 1)}
+              className="pagination-btn"
             >
               Next
             </button>

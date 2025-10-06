@@ -48,16 +48,20 @@ export const CartProvider = ({ children }) => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
       const cart = await cartAPI.getCart();
-      dispatch({ type: "SET_CART", payload: cart });
+      dispatch({ type: "SET_CART", payload: cart.data });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      // If cart doesn't exist yet, that's fine - it will be created on first add
+      if (error.response?.status !== 404) {
+        dispatch({ type: "SET_ERROR", payload: error.message });
+      }
     }
   };
 
   const addToCart = async (productId, quantity = 1) => {
     try {
-      const updatedCart = await cartAPI.addToCart(productId, quantity);
-      dispatch({ type: "ADD_ITEM", payload: updatedCart });
+      const response = await cartAPI.addToCart(productId, quantity);
+      dispatch({ type: "ADD_ITEM", payload: response.data });
+      return true;
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: error.message });
       throw error;
@@ -66,8 +70,8 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = async (productId, quantity) => {
     try {
-      const updatedCart = await cartAPI.updateCartItem(productId, quantity);
-      dispatch({ type: "UPDATE_ITEM", payload: updatedCart });
+      const response = await cartAPI.updateCartItem(productId, quantity);
+      dispatch({ type: "UPDATE_ITEM", payload: response.data });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: error.message });
       throw error;
@@ -76,8 +80,8 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = async (productId) => {
     try {
-      const updatedCart = await cartAPI.removeFromCart(productId);
-      dispatch({ type: "REMOVE_ITEM", payload: updatedCart });
+      const response = await cartAPI.removeFromCart(productId);
+      dispatch({ type: "REMOVE_ITEM", payload: response.data });
     } catch (error) {
       dispatch({ type: "SET_ERROR", payload: error.message });
       throw error;
@@ -96,7 +100,7 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => {
     return state.items.reduce((total, item) => {
-      return total + item.product.price * item.quantity;
+      return total + item.product?.price * item.quantity;
     }, 0);
   };
 

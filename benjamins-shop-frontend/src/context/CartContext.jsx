@@ -1,4 +1,4 @@
-// src/context/CartContext.jsx
+// src/context/CartContext.jsx - Updated with fallback
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { cartAPI } from "../services/api";
 
@@ -33,6 +33,24 @@ const useCart = () => {
   return context;
 };
 
+// Local storage fallback functions
+const getLocalCart = () => {
+  try {
+    const localCart = localStorage.getItem("localCart");
+    return localCart ? JSON.parse(localCart) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalCart = (cartItems) => {
+  try {
+    localStorage.setItem("localCart", JSON.stringify(cartItems));
+  } catch (error) {
+    console.error("Failed to save cart to localStorage:", error);
+  }
+};
+
 const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
@@ -47,27 +65,59 @@ const CartProvider = ({ children }) => {
   const fetchCart = async () => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
+
+      // Try backend first
       const cart = await cartAPI.getCart();
       dispatch({ type: "SET_CART", payload: cart.data });
+      console.log("✅ Cart loaded from backend");
     } catch (error) {
-      // If cart fails due to CORS or other issues, start with empty cart
       console.log(
-        "Cart fetch failed, starting with empty cart:",
+        "❌ Backend cart failed, using local storage:",
         error.message
       );
-      dispatch({ type: "SET_CART", payload: [] });
+
+      // Fallback to local storage
+      const localCart = getLocalCart();
+      dispatch({ type: "SET_CART", payload: localCart });
     }
   };
 
   const addToCart = async (productId, quantity = 1) => {
     try {
+      // Try backend first
       const response = await cartAPI.addToCart(productId, quantity);
       dispatch({ type: "ADD_ITEM", payload: response.data });
       return true;
     } catch (error) {
-      console.error("Failed to add to cart:", error.message);
-      // You could implement local cart storage as fallback
-      throw error;
+      console.log("❌ Backend add failed, using local storage:", error.message);
+
+      // Fallback to local storage
+      const currentItems = state.items;
+      const existingItemIndex = currentItems.findIndex(
+        (item) => item.product?._id === productId
+      );
+
+      let newItems;
+      if (existingItemIndex >= 0) {
+        newItems = currentItems.map((item, index) =>
+          index === existingItemIndex
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      } else {
+        newItems = [
+          ...currentItems,
+          {
+            product: { _id: productId },
+            quantity,
+            // Note: We don't have full product details in local storage
+          },
+        ];
+      }
+
+      dispatch({ type: "ADD_ITEM", payload: newItems });
+      saveLocalCart(newItems);
+      return true;
     }
   };
 
@@ -76,8 +126,21 @@ const CartProvider = ({ children }) => {
       const response = await cartAPI.updateCartItem(productId, quantity);
       dispatch({ type: "UPDATE_ITEM", payload: response.data });
     } catch (error) {
-      console.error("Failed to update quantity:", error.message);
-      throw error;
+      console.log(
+        "❌ Backend update failed, using local storage:",
+        error.message
+      );
+
+      // Fallback to local storage
+      const newItems =
+        quantity <= 0
+          ? state.items.filter((item) => item.product?._id !== productId)
+          : state.items.map((item) =>
+              item.product?._id === productId ? { ...item, quantity } : item
+            );
+
+      dispatch({ type: "UPDATE_ITEM", payload: newItems });
+      saveLocalCart(newItems);
     }
   };
 
@@ -86,8 +149,17 @@ const CartProvider = ({ children }) => {
       const response = await cartAPI.removeFromCart(productId);
       dispatch({ type: "REMOVE_ITEM", payload: response.data });
     } catch (error) {
-      console.error("Failed to remove from cart:", error.message);
-      throw error;
+      console.log(
+        "❌ Backend remove failed, using local storage:",
+        error.message
+      );
+
+      // Fallback to local storage
+      const newItems = state.items.filter(
+        (item) => item.product?._id !== productId
+      );
+      dispatch({ type: "REMOVE_ITEM", payload: newItems });
+      saveLocalCart(newItems);
     }
   };
 
@@ -96,8 +168,14 @@ const CartProvider = ({ children }) => {
       await cartAPI.clearCart();
       dispatch({ type: "CLEAR_CART" });
     } catch (error) {
-      console.error("Failed to clear cart:", error.message);
-      throw error;
+      console.log(
+        "❌ Backend clear failed, using local storage:",
+        error.message
+      );
+
+      // Fallback to local storage
+      dispatch({ type: "CLEAR_CART" });
+      saveLocalCart([]);
     }
   };
 

@@ -12,12 +12,15 @@ router.use(guestAuth);
 // GET /api/cart - Get cart contents
 router.get("/", async (req, res) => {
   try {
-    const session = await GuestSession.findOne({
-      sessionId: req.sessionId,
-    }).populate("cart.product");
-    res.json(session.cart);
+    const session = await GuestSession.findOne(
+      { sessionId: req.sessionId },
+      { cart: 1 }
+    ).populate("cart.product", "name price images stock"); // Only needed fields
+
+    res.json(session?.cart || []);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Cart get error:", error);
+    res.json([]); // Never fail - return empty array
   }
 });
 
@@ -26,28 +29,48 @@ router.post("/", async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
-    const product = await Product.findById(productId);
-    if (!product) {
+    // Quick existence check without full product data
+    const productExists = await Product.exists({ _id: productId });
+    if (!productExists) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const session = await GuestSession.findOne({ sessionId: req.sessionId });
-    const existingItem = session.cart.find(
-      (item) => item.product.toString() === productId
+    // Use MongoDB update operations instead of find-save pattern
+    const session = await GuestSession.findOneAndUpdate(
+      {
+        sessionId: req.sessionId,
+        "cart.product": productId,
+      },
+      {
+        $inc: { "cart.$.quantity": quantity },
+      },
+      { new: true }
     );
 
-    if (existingItem) {
-      existingItem.quantity += quantity;
+    let updatedSession;
+    if (!session) {
+      // Item doesn't exist, add new one
+      updatedSession = await GuestSession.findOneAndUpdate(
+        { sessionId: req.sessionId },
+        {
+          $push: { cart: { product: productId, quantity } },
+        },
+        { new: true }
+      );
     } else {
-      session.cart.push({ product: productId, quantity });
+      updatedSession = session;
     }
 
-    await session.save();
-    await session.populate("cart.product");
+    // Return populated cart
+    const populatedSession = await GuestSession.findOne(
+      { sessionId: req.sessionId },
+      { cart: 1 }
+    ).populate("cart.product", "name price images");
 
-    res.json(session.cart);
+    res.json(populatedSession.cart);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Cart add error:", error);
+    res.status(500).json({ error: "Failed to add to cart" });
   }
 });
 

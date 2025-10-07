@@ -12,21 +12,17 @@ const api = axios.create({
 
 // Enhanced request interceptor - only add guest session for cart/orders
 api.interceptors.request.use((config) => {
-  console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  config.timeout = 10000;
+  config.timeoutErrorMessage = "Request timeout - please try again";
 
-  // Only add guest session header for cart and orders routes
   const requiresGuestSession =
-    config.url?.includes("/cart") ||
-    config.url?.includes("/orders") ||
-    config.url?.includes("/guest");
-
+    config.url?.includes("/cart") || config.url?.includes("/orders");
   if (requiresGuestSession) {
     const sessionId = localStorage.getItem("guestSessionId");
     if (sessionId) {
       config.headers["X-Guest-Session-Id"] = sessionId;
     }
   }
-
   return config;
 });
 
@@ -52,10 +48,14 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.code === "ECONNABORTED") {
+      error.message = "Request timed out. Please try again.";
+    }
     console.error("❌ API Error:", errorMessage);
     // ... existing error handling ...
   }
 );
+
 // Products API - public routes, no guest session needed
 export const productsAPI = {
   getAll: (filters = {}) => api.get("/products", { params: filters }),
@@ -75,11 +75,20 @@ export const cartAPI = {
 
 // Orders API - requires guest session
 export const ordersAPI = {
-  create: (orderData) => api.post("/orders", orderData),
-  getByOrderNumber: (orderNumber) => api.get(`/orders/${orderNumber}`),
-  getBySession: (sessionId) => api.get(`/orders/guest/${sessionId}`),
+  create: async (orderData) => {
+    try {
+      const response = await api.post("/orders", orderData);
+      return response;
+    } catch (error) {
+      if (error.response?.status === 408) {
+        throw new Error(
+          "Order creation timed out. Please check your cart and try again."
+        );
+      }
+      throw error;
+    }
+  },
 };
-
 // Guest API - requires guest session
 export const guestAPI = {
   getSession: () => api.get("/guest/session"),

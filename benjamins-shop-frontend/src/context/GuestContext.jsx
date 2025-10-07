@@ -22,64 +22,65 @@ const GuestProvider = ({ children }) => {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
   const initialized = useRef(false);
+  const initializationPromise = useRef(null); // Track the initialization promise
 
   useEffect(() => {
+    // If already initializing, wait for it to complete
+    if (initializationPromise.current) {
+      initializationPromise.current.finally(() => setLoading(false));
+      return;
+    }
+
     if (initialized.current) return;
+
+    initializationPromise.current = initializeGuestSession();
     initialized.current = true;
 
-    initializeGuestSession();
+    initializationPromise.current.finally(() => {
+      setLoading(false);
+      initializationPromise.current = null;
+    });
   }, []);
 
   const initializeGuestSession = async () => {
     try {
-      // Get existing session ID from localStorage
+      console.log("🚀 Starting guest session initialization...");
+
+      // Check for existing session FIRST
       const existingSessionId = localStorage.getItem("guestSessionId");
+      console.log(
+        "📋 Existing session ID from localStorage:",
+        existingSessionId
+      );
 
       if (existingSessionId) {
-        console.log("🔄 Validating existing session:", existingSessionId);
-
-        // Validate the existing session with backend
-        try {
-          const response = await guestAPI.getSession();
-          const backendSessionId = response.data.sessionId;
-
-          // If backend returns SAME session ID, we're good
-          if (backendSessionId === existingSessionId) {
-            console.log("✅ Session validated successfully");
-            setSessionId(existingSessionId);
-            setLoading(false);
-            return;
-          } else {
-            console.log("🔄 Session changed, updating:", backendSessionId);
-            localStorage.setItem("guestSessionId", backendSessionId);
-            setSessionId(backendSessionId);
-          }
-        } catch (error) {
-          console.log(
-            "❌ Session validation failed, keeping existing:",
-            error.message
-          );
-          setSessionId(existingSessionId);
-        }
-      } else {
-        // No existing session - create new one via backend
-        console.log("🆕 No existing session, creating new one");
-        const response = await guestAPI.getSession();
-        const newSessionId = response.data.sessionId;
-        localStorage.setItem("guestSessionId", newSessionId);
-        setSessionId(newSessionId);
-        console.log("✅ New session created:", newSessionId);
+        console.log("🔄 Found existing session, setting state");
+        setSessionId(existingSessionId);
+        return; // STOP HERE - don't call backend
       }
+
+      // Only call backend if no session exists
+      console.log("🆕 No existing session, calling backend...");
+      const response = await guestAPI.getSession();
+      const backendSessionId = response.data.sessionId;
+
+      console.log("✅ Backend provided session ID:", backendSessionId);
+      localStorage.setItem("guestSessionId", backendSessionId);
+      setSessionId(backendSessionId);
     } catch (error) {
-      console.error("❌ Guest session initialization failed:", error);
-      // Final fallback
-      const fallbackSessionId =
-        localStorage.getItem("guestSessionId") ||
-        "guest_fallback_" + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem("guestSessionId", fallbackSessionId);
-      setSessionId(fallbackSessionId);
-    } finally {
-      setLoading(false);
+      console.error("❌ Guest session initialization error:", error);
+
+      // Final fallback - only create if absolutely necessary
+      const existingSessionId = localStorage.getItem("guestSessionId");
+      if (!existingSessionId) {
+        const fallbackSessionId =
+          "guest_fallback_" + Math.random().toString(36).substr(2, 9);
+        console.log("🆘 Creating fallback session:", fallbackSessionId);
+        localStorage.setItem("guestSessionId", fallbackSessionId);
+        setSessionId(fallbackSessionId);
+      } else {
+        setSessionId(existingSessionId);
+      }
     }
   };
 

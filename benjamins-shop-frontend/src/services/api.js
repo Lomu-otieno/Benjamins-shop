@@ -31,18 +31,16 @@ api.interceptors.response.use(
   (response) => {
     console.log(`✅ API Success: ${response.status} ${response.config.url}`);
 
-    // Check for new session ID in response data
-    if (response.data && response.data.sessionId) {
-      const backendSessionId = response.data.sessionId;
-      const currentSessionId = localStorage.getItem("guestSessionId");
+    // Check for new session ID in response headers OR data
+    const headerSessionId = response.headers["x-new-guest-session"];
+    const dataSessionId = response.data?.sessionId;
 
-      if (backendSessionId !== currentSessionId) {
-        console.log(
-          "Updating session ID from backend response:",
-          backendSessionId
-        );
-        localStorage.setItem("guestSessionId", backendSessionId);
-      }
+    if (headerSessionId) {
+      console.log("Updating session ID from header:", headerSessionId);
+      localStorage.setItem("guestSessionId", headerSessionId);
+    } else if (dataSessionId) {
+      console.log("Updating session ID from response data:", dataSessionId);
+      localStorage.setItem("guestSessionId", dataSessionId);
     }
 
     return response;
@@ -51,8 +49,8 @@ api.interceptors.response.use(
     if (error.code === "ECONNABORTED") {
       error.message = "Request timed out. Please try again.";
     }
-    console.error("❌ API Error:", errorMessage);
-    // ... existing error handling ...
+    console.error("❌ API Error:", error.message);
+    return Promise.reject(error);
   }
 );
 

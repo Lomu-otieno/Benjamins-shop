@@ -1,48 +1,49 @@
-// middleware/guestAuth.js - OPTIMIZED VERSION
+// middleware/guestAuth.js - WITH BETTER LOGGING
 import GuestSession from "../models/GuestSession.js";
 
 const guestAuth = async (req, res, next) => {
   try {
     let sessionId = req.headers["x-guest-session-id"];
-
-    // Quick validation first
-    if (sessionId && !sessionId.startsWith("guest_")) {
-      return res.status(400).json({ error: "Invalid session format" });
-    }
+    console.log("🔍 Guest Auth - Received session ID:", sessionId);
 
     if (!sessionId) {
-      // Create new session - minimal operation
+      console.log("🆕 No session ID - creating new session");
       const newSession = new GuestSession();
       await newSession.save();
-      req.sessionId = newSession.sessionId;
+      sessionId = newSession.sessionId;
+      console.log("✅ Created NEW session:", sessionId);
+      res.setHeader("X-New-Guest-Session", sessionId);
       req.guestSession = newSession;
-      res.setHeader("X-New-Guest-Session", newSession.sessionId);
+      req.sessionId = sessionId;
       return next();
     }
 
-    // Find existing session with ONLY necessary fields
-    const session = await GuestSession.findOne(
-      { sessionId },
-      { sessionId: 1, cart: 1 } // Only get needed fields
-    ).lean(); // Use lean() for faster queries
+    // Try to find existing session
+    console.log("🔎 Looking for existing session:", sessionId);
+    const session = await GuestSession.findOne({ sessionId }).populate(
+      "cart.product"
+    );
 
     if (!session) {
-      // Create new session if not found
+      console.log("❌ Session NOT FOUND in database:", sessionId);
+      console.log("🆕 Creating REPLACEMENT session");
       const newSession = new GuestSession();
       await newSession.save();
-      req.sessionId = newSession.sessionId;
+      sessionId = newSession.sessionId;
+      console.log("✅ Created REPLACEMENT session:", sessionId);
+      res.setHeader("X-New-Guest-Session", sessionId);
       req.guestSession = newSession;
-      res.setHeader("X-New-Guest-Session", newSession.sessionId);
     } else {
-      req.sessionId = sessionId;
+      console.log("✅ Found EXISTING session:", sessionId);
       req.guestSession = session;
     }
 
+    req.sessionId = sessionId;
+    console.log("🎯 Final session ID for request:", sessionId);
     next();
   } catch (error) {
-    console.error("Guest auth error:", error);
-    // Don't block the request - continue with limited functionality
-    req.sessionId = req.headers["x-guest-session-id"] || "guest_fallback";
+    console.error("💥 Guest auth error:", error);
+    req.sessionId = req.headers["x-guest-session-id"] || "guest_error_fallback";
     next();
   }
 };

@@ -1,4 +1,4 @@
-// src/context/GuestContext.jsx
+// src/context/GuestContext.jsx - FIXED VERSION
 import React, {
   createContext,
   useContext,
@@ -32,24 +32,52 @@ const GuestProvider = ({ children }) => {
 
   const initializeGuestSession = async () => {
     try {
+      // Get existing session ID from localStorage
       const existingSessionId = localStorage.getItem("guestSessionId");
 
       if (existingSessionId) {
-        console.log("Found existing session ID:", existingSessionId);
-        setSessionId(existingSessionId);
-        return; // ✅ stop here, don’t call backend again
-      }
+        console.log("🔄 Validating existing session:", existingSessionId);
 
-      // Otherwise, ask backend to create new one
-      const response = await guestAPI.getSession();
-      const backendSessionId = response.data.sessionId;
+        // Validate the existing session with backend
+        try {
+          const response = await guestAPI.getSession();
+          const backendSessionId = response.data.sessionId;
 
-      if (backendSessionId) {
-        localStorage.setItem("guestSessionId", backendSessionId);
-        setSessionId(backendSessionId);
+          // If backend returns SAME session ID, we're good
+          if (backendSessionId === existingSessionId) {
+            console.log("✅ Session validated successfully");
+            setSessionId(existingSessionId);
+            setLoading(false);
+            return;
+          } else {
+            console.log("🔄 Session changed, updating:", backendSessionId);
+            localStorage.setItem("guestSessionId", backendSessionId);
+            setSessionId(backendSessionId);
+          }
+        } catch (error) {
+          console.log(
+            "❌ Session validation failed, keeping existing:",
+            error.message
+          );
+          setSessionId(existingSessionId);
+        }
+      } else {
+        // No existing session - create new one via backend
+        console.log("🆕 No existing session, creating new one");
+        const response = await guestAPI.getSession();
+        const newSessionId = response.data.sessionId;
+        localStorage.setItem("guestSessionId", newSessionId);
+        setSessionId(newSessionId);
+        console.log("✅ New session created:", newSessionId);
       }
     } catch (error) {
-      console.error("Guest session initialization error:", error);
+      console.error("❌ Guest session initialization failed:", error);
+      // Final fallback
+      const fallbackSessionId =
+        localStorage.getItem("guestSessionId") ||
+        "guest_fallback_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("guestSessionId", fallbackSessionId);
+      setSessionId(fallbackSessionId);
     } finally {
       setLoading(false);
     }

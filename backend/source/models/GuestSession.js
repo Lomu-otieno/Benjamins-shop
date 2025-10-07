@@ -1,12 +1,11 @@
-// models/GuestSession.js
+// models/GuestSession.js - FIXED
 import mongoose from "mongoose";
-import { v4 as uuidv4 } from "uuid";
 
 const guestSessionSchema = new mongoose.Schema(
   {
     sessionId: {
       type: String,
-      default: uuidv4,
+      default: () => "guest_" + Math.random().toString(36).substr(2, 9), // Consistent with middleware
       unique: true,
     },
     cart: [
@@ -24,7 +23,7 @@ const guestSessionSchema = new mongoose.Schema(
     ],
     expiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       index: { expires: "7d" },
     },
   },

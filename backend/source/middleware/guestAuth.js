@@ -3,35 +3,41 @@ import GuestSession from "../models/GuestSession.js";
 
 const guestAuth = async (req, res, next) => {
   try {
-    let sessionId = req.headers["x-guest-session-id"]; // Note: changed from "x-guest-session" to "x-guest-session-id"
+    let sessionId = req.headers["x-guest-session-id"];
+    console.log("🔍 Guest Auth - Received session ID:", sessionId);
 
     if (!sessionId) {
-      // Create new guest session
+      console.log("🆕 No session ID - creating new session");
       const newSession = new GuestSession();
       await newSession.save();
       sessionId = newSession.sessionId;
+      console.log("✅ Created new session:", sessionId);
 
-      // Set session in response header for client to store
       res.setHeader("X-New-Guest-Session", sessionId);
       req.guestSession = newSession;
     } else {
-      // Find existing session
+      console.log("🔎 Looking for existing session:", sessionId);
       const session = await GuestSession.findOne({ sessionId }).populate(
         "cart.product"
       );
+
       if (!session) {
-        // Create new session if not found
+        console.log("❌ Session not found - creating new one");
         const newSession = new GuestSession();
         await newSession.save();
         sessionId = newSession.sessionId;
+        console.log("✅ Created replacement session:", sessionId);
+
         res.setHeader("X-New-Guest-Session", sessionId);
         req.guestSession = newSession;
       } else {
+        console.log("✅ Found existing session");
         req.guestSession = session;
       }
     }
 
     req.sessionId = sessionId;
+    console.log("🎯 Final session ID:", sessionId);
     next();
   } catch (error) {
     console.error("Guest auth error:", error);

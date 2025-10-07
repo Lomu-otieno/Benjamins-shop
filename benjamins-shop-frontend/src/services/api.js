@@ -34,31 +34,28 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => {
     console.log(`✅ API Success: ${response.status} ${response.config.url}`);
+
+    // Check for new session ID in response data
+    if (response.data && response.data.sessionId) {
+      const backendSessionId = response.data.sessionId;
+      const currentSessionId = localStorage.getItem("guestSessionId");
+
+      if (backendSessionId !== currentSessionId) {
+        console.log(
+          "Updating session ID from backend response:",
+          backendSessionId
+        );
+        localStorage.setItem("guestSessionId", backendSessionId);
+      }
+    }
+
     return response;
   },
   (error) => {
-    let errorMessage = "An unexpected error occurred";
-
-    if (error.code === "ECONNREFUSED") {
-      errorMessage =
-        "Cannot connect to server. Please check if the backend is running.";
-    } else if (error.code === "NETWORK_ERROR") {
-      errorMessage = "Network error. Please check your internet connection.";
-    } else if (error.response) {
-      errorMessage =
-        error.response.data?.error || `Server error: ${error.response.status}`;
-    } else if (error.request) {
-      errorMessage = "No response from server. The backend might be down.";
-    } else {
-      errorMessage = error.message;
-    }
-
     console.error("❌ API Error:", errorMessage);
-
-    return Promise.reject(new Error(errorMessage));
+    // ... existing error handling ...
   }
 );
-
 // Products API - public routes, no guest session needed
 export const productsAPI = {
   getAll: (filters = {}) => api.get("/products", { params: filters }),

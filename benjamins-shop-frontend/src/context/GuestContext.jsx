@@ -21,10 +21,9 @@ const useGuest = () => {
 const GuestProvider = ({ children }) => {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const initialized = useRef(false); // Track if already initialized
+  const initialized = useRef(false);
 
   useEffect(() => {
-    // Prevent multiple initializations
     if (initialized.current) return;
     initialized.current = true;
 
@@ -33,58 +32,48 @@ const GuestProvider = ({ children }) => {
 
   const initializeGuestSession = async () => {
     try {
-      // Check if session already exists in localStorage
+      // DON'T create session ID in frontend - let backend handle it
       const existingSessionId = localStorage.getItem("guestSessionId");
 
       if (existingSessionId) {
-        // Use existing session
+        console.log("Found existing session ID:", existingSessionId);
         setSessionId(existingSessionId);
-        console.log("Using existing guest session:", existingSessionId);
-
-        // Validate existing session
-        try {
-          await guestAPI.getSession();
-          console.log("Existing guest session validated");
-        } catch (error) {
-          console.log(
-            "Existing session validation failed, keeping session:",
-            error.message
-          );
-        }
-      } else {
-        // Create new session only if none exists
-        const newSessionId = "guest_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("guestSessionId", newSessionId);
-        setSessionId(newSessionId);
-        console.log("Created new guest session:", newSessionId);
-
-        // Try to validate new session
-        try {
-          await guestAPI.getSession();
-          console.log("New guest session validated");
-        } catch (error) {
-          console.log("New session validation failed:", error.message);
-        }
       }
+
+      // Always call backend to validate/get session
+      const response = await guestAPI.getSession();
+
+      // Backend will either:
+      // 1. Return the existing session if valid
+      // 2. Create a new session and return it in headers
+      const backendSessionId = response.data.sessionId;
+
+      if (backendSessionId && backendSessionId !== existingSessionId) {
+        console.log("Backend provided session ID:", backendSessionId);
+        localStorage.setItem("guestSessionId", backendSessionId);
+        setSessionId(backendSessionId);
+      }
+
+      console.log("Guest session initialized with backend");
     } catch (error) {
       console.error("Guest session initialization error:", error);
+
+      // Only create fallback if absolutely necessary
+      if (!sessionId) {
+        const fallbackSessionId =
+          "guest_fallback_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("guestSessionId", fallbackSessionId);
+        setSessionId(fallbackSessionId);
+        console.log("Created fallback session ID:", fallbackSessionId);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Optional: Method to manually refresh session if needed
-  const refreshSession = async () => {
-    const newSessionId = "guest_" + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem("guestSessionId", newSessionId);
-    setSessionId(newSessionId);
-    console.log("Refreshed guest session:", newSessionId);
-  };
-
   const value = {
     sessionId,
     loading,
-    refreshSession, // Optional: export if you need manual refresh
   };
 
   return (

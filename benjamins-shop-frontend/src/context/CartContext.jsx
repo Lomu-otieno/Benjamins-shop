@@ -25,7 +25,6 @@ const cartReducer = (state, action) => {
   }
 };
 
-// Create a custom hook for using cart context
 const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -34,7 +33,6 @@ const useCart = () => {
   return context;
 };
 
-// Export the provider component separately
 const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
@@ -52,10 +50,12 @@ const CartProvider = ({ children }) => {
       const cart = await cartAPI.getCart();
       dispatch({ type: "SET_CART", payload: cart.data });
     } catch (error) {
-      // If cart doesn't exist yet, that's fine - it will be created on first add
-      if (error.response?.status !== 404) {
-        dispatch({ type: "SET_ERROR", payload: error.message });
-      }
+      // If cart fails due to CORS or other issues, start with empty cart
+      console.log(
+        "Cart fetch failed, starting with empty cart:",
+        error.message
+      );
+      dispatch({ type: "SET_CART", payload: [] });
     }
   };
 
@@ -65,7 +65,8 @@ const CartProvider = ({ children }) => {
       dispatch({ type: "ADD_ITEM", payload: response.data });
       return true;
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      console.error("Failed to add to cart:", error.message);
+      // You could implement local cart storage as fallback
       throw error;
     }
   };
@@ -75,7 +76,7 @@ const CartProvider = ({ children }) => {
       const response = await cartAPI.updateCartItem(productId, quantity);
       dispatch({ type: "UPDATE_ITEM", payload: response.data });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      console.error("Failed to update quantity:", error.message);
       throw error;
     }
   };
@@ -85,7 +86,7 @@ const CartProvider = ({ children }) => {
       const response = await cartAPI.removeFromCart(productId);
       dispatch({ type: "REMOVE_ITEM", payload: response.data });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      console.error("Failed to remove from cart:", error.message);
       throw error;
     }
   };
@@ -95,7 +96,7 @@ const CartProvider = ({ children }) => {
       await cartAPI.clearCart();
       dispatch({ type: "CLEAR_CART" });
     } catch (error) {
-      dispatch({ type: "SET_ERROR", payload: error.message });
+      console.error("Failed to clear cart:", error.message);
       throw error;
     }
   };

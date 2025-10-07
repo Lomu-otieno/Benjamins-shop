@@ -9,6 +9,13 @@ router.get("/session", guestAuth, (req, res) => {
   res.json({
     sessionId: req.sessionId,
     message: "Guest session active",
+    guestSession: req.guestSession
+      ? {
+          id: req.guestSession._id,
+          cart: req.guestSession.cart,
+          createdAt: req.guestSession.createdAt,
+        }
+      : null,
   });
 });
 

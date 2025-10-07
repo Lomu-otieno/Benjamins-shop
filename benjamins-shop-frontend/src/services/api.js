@@ -3,26 +3,34 @@ import axios from "axios";
 
 const API_BASE = "https://benjamins-shop.onrender.com/api";
 
-// Create axios instance with guest session handling
+// Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 15000, // Increased timeout
-  withCredentials: false, // Important for CORS
+  timeout: 15000,
+  withCredentials: false,
 });
 
-// Add guest session ID to all requests
+// Enhanced request interceptor - only add guest session for cart/orders
 api.interceptors.request.use((config) => {
-  const sessionId = localStorage.getItem("guestSessionId");
-  if (sessionId) {
-    config.headers["X-Guest-Session-Id"] = sessionId;
+  console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+
+  // Only add guest session header for cart and orders routes
+  const requiresGuestSession =
+    config.url?.includes("/cart") ||
+    config.url?.includes("/orders") ||
+    config.url?.includes("/guest");
+
+  if (requiresGuestSession) {
+    const sessionId = localStorage.getItem("guestSessionId");
+    if (sessionId) {
+      config.headers["X-Guest-Session-Id"] = sessionId;
+    }
   }
 
-  // Log request for debugging
-  console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
 
-// Enhanced response interceptor for better error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
     console.log(`✅ API Success: ${response.status} ${response.config.url}`);
@@ -37,40 +45,27 @@ api.interceptors.response.use(
     } else if (error.code === "NETWORK_ERROR") {
       errorMessage = "Network error. Please check your internet connection.";
     } else if (error.response) {
-      // Server responded with error status
       errorMessage =
         error.response.data?.error || `Server error: ${error.response.status}`;
     } else if (error.request) {
-      // Request made but no response received
       errorMessage = "No response from server. The backend might be down.";
     } else {
       errorMessage = error.message;
     }
 
-    console.error("❌ API Error:", {
-      message: errorMessage,
-      url: error.config?.url,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
+    console.error("❌ API Error:", errorMessage);
 
     return Promise.reject(new Error(errorMessage));
   }
 );
 
-// Products API
+// Products API - public routes, no guest session needed
 export const productsAPI = {
   getAll: (filters = {}) => api.get("/products", { params: filters }),
   getById: (id) => api.get(`/products/${id}`),
-  create: (formData) =>
-    api.post("/products", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  update: (id, data) => api.put(`/products/${id}`, data),
-  delete: (id) => api.delete(`/products/${id}`),
 };
 
-// Cart API
+// Cart API - requires guest session
 export const cartAPI = {
   getCart: () => api.get("/cart"),
   addToCart: (productId, quantity) =>
@@ -81,14 +76,14 @@ export const cartAPI = {
   clearCart: () => api.delete("/cart"),
 };
 
-// Orders API
+// Orders API - requires guest session
 export const ordersAPI = {
   create: (orderData) => api.post("/orders", orderData),
   getByOrderNumber: (orderNumber) => api.get(`/orders/${orderNumber}`),
   getBySession: (sessionId) => api.get(`/orders/guest/${sessionId}`),
 };
 
-// Guest API
+// Guest API - requires guest session
 export const guestAPI = {
   getSession: () => api.get("/guest/session"),
 };

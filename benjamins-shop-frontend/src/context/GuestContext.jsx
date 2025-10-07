@@ -1,10 +1,15 @@
 // src/context/GuestContext.jsx
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { guestAPI } from "../services/api";
 
 const GuestContext = createContext();
 
-// Create a custom hook for using guest context
 const useGuest = () => {
   const context = useContext(GuestContext);
   if (!context) {
@@ -13,34 +18,73 @@ const useGuest = () => {
   return context;
 };
 
-// Export the provider component separately
 const GuestProvider = ({ children }) => {
   const [sessionId, setSessionId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initialized = useRef(false); // Track if already initialized
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initialized.current) return;
+    initialized.current = true;
+
     initializeGuestSession();
   }, []);
 
   const initializeGuestSession = async () => {
     try {
-      // Generate a session ID and store it
-      const newSessionId = "guest_" + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem("guestSessionId", newSessionId);
-      setSessionId(newSessionId);
+      // Check if session already exists in localStorage
+      const existingSessionId = localStorage.getItem("guestSessionId");
 
-      // Test the session
-      await guestAPI.getSession();
+      if (existingSessionId) {
+        // Use existing session
+        setSessionId(existingSessionId);
+        console.log("Using existing guest session:", existingSessionId);
+
+        // Validate existing session
+        try {
+          await guestAPI.getSession();
+          console.log("Existing guest session validated");
+        } catch (error) {
+          console.log(
+            "Existing session validation failed, keeping session:",
+            error.message
+          );
+        }
+      } else {
+        // Create new session only if none exists
+        const newSessionId = "guest_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("guestSessionId", newSessionId);
+        setSessionId(newSessionId);
+        console.log("Created new guest session:", newSessionId);
+
+        // Try to validate new session
+        try {
+          await guestAPI.getSession();
+          console.log("New guest session validated");
+        } catch (error) {
+          console.log("New session validation failed:", error.message);
+        }
+      }
     } catch (error) {
-      console.log("Guest session initialized");
+      console.error("Guest session initialization error:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Optional: Method to manually refresh session if needed
+  const refreshSession = async () => {
+    const newSessionId = "guest_" + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem("guestSessionId", newSessionId);
+    setSessionId(newSessionId);
+    console.log("Refreshed guest session:", newSessionId);
+  };
+
   const value = {
     sessionId,
     loading,
+    refreshSession, // Optional: export if you need manual refresh
   };
 
   return (

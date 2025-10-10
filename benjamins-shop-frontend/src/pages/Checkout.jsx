@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { ordersAPI } from "../services/api";
 import { CreditCard, Lock, ArrowLeft } from "lucide-react";
-
+import "../styles/Checkout.css";
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, clearCart } = useCart();
@@ -73,7 +73,7 @@ const Checkout = () => {
               <h2>Contact Information</h2>
               <div className="form-grid">
                 <div className="form-group">
-                  <label htmlFor="firstName">First Name *</label>
+                  <label htmlFor="firstName">First Name </label>
                   <input
                     id="firstName"
                     type="text"
@@ -89,7 +89,7 @@ const Checkout = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="lastName">Last Name *</label>
+                  <label htmlFor="lastName">Last Name </label>
                   <input
                     id="lastName"
                     type="text"
@@ -105,7 +105,7 @@ const Checkout = () => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="email">Email *</label>
+                  <label htmlFor="email">Email </label>
                   <input
                     id="email"
                     type="email"
@@ -121,6 +121,7 @@ const Checkout = () => {
                   <input
                     id="phone"
                     type="tel"
+                    required
                     value={formData.customerInfo.phone}
                     onChange={(e) =>
                       handleInputChange("customerInfo", "phone", e.target.value)
@@ -134,54 +135,39 @@ const Checkout = () => {
               <h2>Shipping Address</h2>
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label htmlFor="address">Address *</label>
+                  <label htmlFor="street">Street </label>
                   <input
-                    id="address"
+                    id="street"
                     type="text"
                     required
-                    value={formData.shippingAddress.address}
+                    value={formData.shippingAddress.street}
                     onChange={(e) =>
                       handleInputChange(
                         "shippingAddress",
-                        "address",
+                        "street",
                         e.target.value
                       )
                     }
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="city">City *</label>
+                  <label htmlFor="hostel">Hostel </label>
                   <input
-                    id="city"
+                    id="hostel"
                     type="text"
                     required
-                    value={formData.shippingAddress.city}
+                    value={formData.shippingAddress.hostel}
                     onChange={(e) =>
                       handleInputChange(
                         "shippingAddress",
-                        "city",
+                        "hostel",
                         e.target.value
                       )
                     }
                   />
                 </div>
-                <div className="form-group">
-                  <label htmlFor="state">State *</label>
-                  <input
-                    id="state"
-                    type="text"
-                    required
-                    value={formData.shippingAddress.state}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "shippingAddress",
-                        "state",
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-                <div className="form-group">
+
+                {/* <div className="form-group">
                   <label htmlFor="zipCode">ZIP Code *</label>
                   <input
                     id="zipCode"
@@ -196,8 +182,8 @@ const Checkout = () => {
                       )
                     }
                   />
-                </div>
-                <div className="form-group">
+                </div> */}
+                {/* <div className="form-group">
                   <label htmlFor="country">Country *</label>
                   <select
                     id="country"
@@ -215,7 +201,7 @@ const Checkout = () => {
                     <option value="Canada">Canada</option>
                     <option value="United Kingdom">United Kingdom</option>
                   </select>
-                </div>
+                </div> */}
               </div>
             </section>
 
@@ -236,7 +222,7 @@ const Checkout = () => {
                 <CreditCard size={20} />
                 {loading
                   ? "Placing Order..."
-                  : `Place Order - $${getCartTotal().toFixed(2)}`}
+                  : `Place Order - ksh ${getCartTotal().toFixed(2)}`}
               </button>
             </div>
           </form>

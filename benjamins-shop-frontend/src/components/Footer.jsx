@@ -28,7 +28,7 @@ const Footer = () => {
           <div className="footer-section">
             <h4>Contact Info</h4>
             <p>Email: support@benjaminshop.com</p>
-            <p>Phone: (555) 123-4567</p>
+            <p>Phone: +254 725 152 364</p>
           </div>
         </div>
 

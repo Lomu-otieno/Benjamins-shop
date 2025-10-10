@@ -13,10 +13,10 @@ const Navbar = () => {
           Benjamin's Shop
         </Link>
 
-        <div className="nav-search">
+        {/* <div className="nav-search">
           <input type="text" placeholder="Search products..." />
           <Search size={20} />
-        </div>
+        </div> */}
 
         <div className="nav-links">
           <Link to="/products">Products</Link>

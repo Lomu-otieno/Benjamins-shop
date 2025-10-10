@@ -22,7 +22,7 @@ const Home = () => {
           <div className="features-grid">
             <div className="feature">
               <h3>🚚 Free Shipping</h3>
-              <p>Free shipping on orders over $50</p>
+              <p>On orders</p>
             </div>
             <div className="feature">
               <h3>💳 Secure Payment</h3>
@@ -30,7 +30,7 @@ const Home = () => {
             </div>
             <div className="feature">
               <h3>↩️ Easy Returns</h3>
-              <p>30-day return policy</p>
+              <p>3-day return policy</p>
             </div>
           </div>
         </div>

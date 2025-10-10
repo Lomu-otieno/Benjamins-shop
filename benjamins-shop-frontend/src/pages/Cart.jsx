@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "../context/CartContext";
-
+import "../styles/Cart.css";
 const Cart = () => {
   const navigate = useNavigate();
   const { items, updateQuantity, removeFromCart, getCartTotal, loading } =
@@ -72,15 +72,17 @@ const Cart = () => {
           <div className="cart-items">
             {items.map((item) => (
               <div key={item.product?._id} className="cart-item">
-                <div className="item-image">
-                  <img
-                    src={item.product?.images?.[0]?.url || "/placeholder.jpg"}
-                    alt={item.product?.name}
-                  />
-                </div>
+                <br></br>
 
                 <div className="item-details">
                   <h3>{item.product?.name}</h3>
+                  <br></br>
+                  <div className="item-image">
+                    <img
+                      src={item.product?.images?.[0]?.url || "/placeholder.jpg"}
+                      alt={item.product?.name}
+                    />
+                  </div>
                   <p className="item-price">${item.product?.price}</p>
                   {item.product?.stock < 5 && item.product?.stock > 0 && (
                     <p className="low-stock">

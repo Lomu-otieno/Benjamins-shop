@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { productsAPI } from "../services/api";
 import ProductCard from "../components/ProductCard";
 import SearchFilters from "../components/SearchFilters";
-
+import "../styles/Products.css";
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);

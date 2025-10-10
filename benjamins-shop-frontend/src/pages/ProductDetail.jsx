@@ -87,7 +87,7 @@ const ProductDetail = () => {
 
           <div className="product-info">
             <h1>{product.name}</h1>
-            <p className="product-price">${product.price}</p>
+            <p className="product-price">Ksh{product.price}</p>
             <p className="product-description">{product.description}</p>
 
             <div className="product-meta">

@@ -1,12 +1,30 @@
+// src/components/SearchFilters.jsx - SIMPLE VERSION
 import React, { useState } from "react";
+import "../styles/SearchFilters.css";
 
 const SearchFilters = ({ filters, onFilterChange }) => {
   const [localFilters, setLocalFilters] = useState(filters);
 
-  const handleChange = (key, value) => {
-    const newFilters = { ...localFilters, [key]: value };
+  const handleSearchChange = (value) => {
+    const newFilters = { ...localFilters, search: value };
     setLocalFilters(newFilters);
-    onFilterChange(newFilters);
+    // Don't call onFilterChange here - wait for user to press Enter or blur
+  };
+
+  const handleSearchSubmit = () => {
+    onFilterChange(localFilters);
+  };
+
+  const handleCategoryChange = (value) => {
+    const newFilters = { ...localFilters, category: value };
+    setLocalFilters(newFilters);
+    onFilterChange(newFilters); // Category changes can be immediate
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearchSubmit();
+    }
   };
 
   return (
@@ -16,7 +34,9 @@ const SearchFilters = ({ filters, onFilterChange }) => {
           type="text"
           placeholder="Search products..."
           value={localFilters.search || ""}
-          onChange={(e) => handleChange("search", e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          onKeyPress={handleKeyPress}
+          onBlur={handleSearchSubmit}
           className="search-input"
         />
       </div>
@@ -24,7 +44,7 @@ const SearchFilters = ({ filters, onFilterChange }) => {
       <div className="filter-group">
         <select
           value={localFilters.category || ""}
-          onChange={(e) => handleChange("category", e.target.value)}
+          onChange={(e) => handleCategoryChange(e.target.value)}
           className="category-select"
         >
           <option value="">All Categories</option>

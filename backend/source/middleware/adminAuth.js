@@ -1,18 +1,27 @@
-const adminAuth = (req, res, next) => {
-  // In a real app, you'd have proper admin authentication
-  // For now, we'll use a simple API key or token check
-  const adminToken = req.headers["x-admin-token"] || req.query.adminToken;
+import jwt from "jsonwebtoken";
+import Admin from "../models/Admin.js";
 
-  // In production, use environment variables and proper authentication
-  const validToken = process.env.ADMIN_TOKEN;
+const adminAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-  if (!adminToken || adminToken !== validToken) {
-    return res.status(401).json({
-      error: "Unauthorized: Admin access required",
-    });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const admin = await Admin.findById(decoded.id);
+    if (!admin) {
+      return res.status(401).json({ error: "Unauthorized: Admin not found" });
+    }
+
+    req.admin = admin;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: "Unauthorized: Invalid token" });
   }
-
-  next();
 };
 
 export default adminAuth;

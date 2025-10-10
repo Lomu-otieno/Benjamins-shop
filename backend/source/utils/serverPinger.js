@@ -1,7 +1,7 @@
 import axios from "axios";
 
 class ServerPinger {
-  constructor(baseURLs = [process.env.LOCALHOST, process.env.SERVER_URI]) {
+  constructor(baseURLs = [process.env.LOCALSERVER, process.env.SERVER_URI]) {
     this.baseURLs = baseURLs;
     this.intervalId = null;
     this.currentURL = null;

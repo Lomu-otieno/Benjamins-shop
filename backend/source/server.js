@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
 import serverPinger from "./utils/serverPinger.js";
-
+import adminRoutes from "./routes/adminRoutes.js";
 // Import routes
 import productRoutes from "./routes/products.js";
 import cartRoutes from "./routes/cart.js";
@@ -47,6 +47,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/guest", guestRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

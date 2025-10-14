@@ -3,8 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/database.js";
 import serverPinger from "./utils/serverPinger.js";
-import adminRoutes from "./routes/adminRoutes.js";
 // Import routes
+import adminRoutes from "./routes/admin.js";
 import productRoutes from "./routes/products.js";
 import cartRoutes from "./routes/cart.js";
 import orderRoutes from "./routes/orders.js";

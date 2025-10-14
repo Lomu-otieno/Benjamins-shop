@@ -4,6 +4,11 @@ import Admin from "../models/Admin.js";
 
 const router = express.Router();
 
+// In your admin.js routes file, add this temporary route:
+router.get("/test", (req, res) => {
+  res.json({ message: "Admin routes are working!" });
+});
+
 // Register admin (one-time setup)
 router.post("/register", async (req, res) => {
   try {

@@ -237,7 +237,8 @@ const Checkout = () => {
                     <span className="item-quantity">Qty: {item.quantity}</span>
                   </div>
                   <span className="item-price">
-                    ${((item.product?.price || 0) * item.quantity).toFixed(2)}
+                    Ksh{" "}
+                    {((item.product?.price || 0) * item.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -245,7 +246,7 @@ const Checkout = () => {
             <div className="order-totals">
               <div className="total-row">
                 <span>Subtotal:</span>
-                <span>${getCartTotal().toFixed(2)}</span>
+                <span>Ksh {getCartTotal().toFixed(2)}</span>
               </div>
               <div className="total-row">
                 <span>Shipping:</span>
@@ -253,7 +254,7 @@ const Checkout = () => {
               </div>
               <div className="total-row grand-total">
                 <span>Total:</span>
-                <span>${getCartTotal().toFixed(2)}</span>
+                <span>Ksh {getCartTotal().toFixed(2)}</span>
               </div>
             </div>
           </div>

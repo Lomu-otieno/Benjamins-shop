@@ -83,7 +83,7 @@ const Cart = () => {
                       alt={item.product?.name}
                     />
                   </div>
-                  <p className="item-price">${item.product?.price}</p>
+                  <p className="item-price">Ksh {item.product?.price}</p>
                   {item.product?.stock < 5 && item.product?.stock > 0 && (
                     <p className="low-stock">
                       Only {item.product.stock} left in stock!
@@ -114,7 +114,7 @@ const Cart = () => {
                 </div>
 
                 <div className="item-total">
-                  ${((item.product?.price || 0) * item.quantity).toFixed(2)}
+                  Ksh {((item.product?.price || 0) * item.quantity).toFixed(2)}
                 </div>
 
                 <button
@@ -132,7 +132,7 @@ const Cart = () => {
             <h3>Order Summary</h3>
             <div className="summary-row">
               <span>Subtotal:</span>
-              <span>${getCartTotal().toFixed(2)}</span>
+              <span>Ksh {getCartTotal().toFixed(2)}</span>
             </div>
             <div className="summary-row">
               <span>Shipping:</span>
@@ -140,7 +140,7 @@ const Cart = () => {
             </div>
             <div className="summary-row total">
               <span>Total:</span>
-              <span>${getCartTotal().toFixed(2)}</span>
+              <span>Ksh {getCartTotal().toFixed(2)}</span>
             </div>
 
             <div className="cart-actions">

@@ -1,9 +1,10 @@
-// src/pages/ProductDetail.jsx
+// src/pages/ProductDetail.jsx - UPDATED WITH CSS IMPORT
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { productsAPI } from "../services/api";
 import { useCart } from "../context/CartContext";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
+import "../styles/ProductDetail.css"; // Import the new CSS file
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -87,7 +88,7 @@ const ProductDetail = () => {
 
           <div className="product-info">
             <h1>{product.name}</h1>
-            <p className="product-price">Ksh{product.price}</p>
+            <p className="product-price">Ksh {product.price}</p>
             <p className="product-description">{product.description}</p>
 
             <div className="product-meta">
@@ -95,7 +96,7 @@ const ProductDetail = () => {
                 <strong>Category:</strong> {product.category || "Uncategorized"}
               </p>
               <p>
-                <strong>Stock:</strong> {product.stock} available
+                <strong>Stock:</strong> {product.stock}
               </p>
               <p>
                 <strong>Status:</strong>
@@ -129,7 +130,9 @@ const ProductDetail = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock === 0 || addingToCart}
-                className="btn btn-primary btn-large"
+                className={`btn btn-primary btn-large ${
+                  addingToCart ? "adding-to-cart" : ""
+                }`}
               >
                 <ShoppingCart size={20} />
                 {addingToCart
@@ -141,13 +144,6 @@ const ProductDetail = () => {
             </div>
 
             <div className="action-buttons">
-              <button
-                onClick={() => navigate(-1)}
-                className="btn btn-secondary"
-              >
-                <ArrowLeft size={16} />
-                Back
-              </button>
               <Link to="/products" className="btn btn-outline">
                 Continue Shopping
               </Link>

@@ -26,6 +26,7 @@ app.use(
       process.env.FRONTEND_URI,
       process.env.PASSWORD_URI,
       process.env.SERVER_URI,
+      process.env.LIVE_FRONTEND,
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: [

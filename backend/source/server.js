@@ -27,6 +27,8 @@ app.use(
       process.env.PASSWORD_URI,
       process.env.SERVER_URI,
       process.env.LIVE_FRONTEND,
+      "http://localhost:5500", // Add this explicitly
+      "http://127.0.0.1:5500", // Add this for localhost IP
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: [

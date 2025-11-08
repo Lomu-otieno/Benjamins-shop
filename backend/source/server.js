@@ -31,6 +31,7 @@ app.use(
       process.env.FRONTEND_URI_THREE,
       process.env.PASSWORD_URI,
       process.env.SERVER_URI,
+      process.env.VITE_URI,
       process.env.LIVE_FRONTEND,
       "http://localhost:5173",
       "http://localhost:5500",

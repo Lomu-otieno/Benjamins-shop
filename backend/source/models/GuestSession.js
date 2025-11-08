@@ -39,6 +39,5 @@ const guestSessionSchema = new mongoose.Schema(
 
 // Add index for better performance
 guestSessionSchema.index({ sessionId: 1 });
-guestSessionSchema.index({ expiresAt: 1 });
 
 export default mongoose.model("GuestSession", guestSessionSchema);

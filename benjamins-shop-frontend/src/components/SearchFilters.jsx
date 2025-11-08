@@ -48,10 +48,15 @@ const SearchFilters = ({ filters, onFilterChange }) => {
           className="category-select"
         >
           <option value="">All Categories</option>
-          <option value="electronics">Electronics</option>
+          <option value="kitchen">Kitchen</option>
+          <option value="food">Food</option>
+          <option value="beauty">Beauty</option>
+          <option value="sport">Sports</option>
+          <option value="laundry">Laundry</option>
+          <option value="home">Home & Garden</option>
           <option value="clothing">Clothing</option>
           <option value="books">Books</option>
-          <option value="home">Home & Garden</option>
+          <option value="electronics">Electronics</option>
         </select>
       </div>
     </div>

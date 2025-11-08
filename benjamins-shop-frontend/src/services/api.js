@@ -1,7 +1,7 @@
 // src/services/api.js - ENHANCED VERSION
 import axios from "axios";
 
-const API_BASE = "https://benjamins-shop.onrender.com/api";
+const API_BASE = import.meta.env.VITE_SERVER_URI;
 
 const api = axios.create({
   baseURL: API_BASE,

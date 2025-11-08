@@ -13,22 +13,19 @@ api.interceptors.request.use((config) => {
   const requiresGuestSession =
     config.url?.includes("/cart") ||
     config.url?.includes("/orders") ||
-    config.url?.includes("/guest/session"); // Include guest session route too!
+    config.url?.includes("/guest/session");
 
   if (requiresGuestSession) {
     const sessionId = localStorage.getItem("guestSessionId");
     if (sessionId) {
-      // ✅ CORRECT HEADER NAME: backend expects "x-guest-session"
-      config.headers["x-guest-session"] = sessionId;
-      console.log("🔑 Adding guest session header:", sessionId);
-    } else {
-      console.warn(
-        "⚠️ No session ID found for request that requires it:",
-        config.url
+      // ✅ USE THE HEADER YOUR BACKEND EXPECTS
+      config.headers["X-Guest-Session-Id"] = sessionId;
+      console.log(
+        "🔑 Adding guest session header (X-Guest-Session-Id):",
+        sessionId
       );
     }
   }
-
   return config;
 });
 

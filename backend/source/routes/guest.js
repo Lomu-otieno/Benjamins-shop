@@ -1,6 +1,6 @@
-// routes/guest.js - UPDATED
+// routes/guest.js - IMPROVED VERSION
 import express from "express";
-import GuestSession from "../models/GuestSession.js"; // Import directly
+import GuestSession from "../models/GuestSession.js";
 import guestAuth from "../middleware/guestAuth.js";
 
 const router = express.Router();
@@ -8,38 +8,34 @@ const router = express.Router();
 // GET /api/guest/session - Get or create guest session
 router.get("/session", guestAuth, async (req, res) => {
   try {
-    let sessionId = req.sessionId;
-    let guestSession = req.guestSession;
+    const sessionId = req.sessionId;
+    const guestSession = req.guestSession;
 
-    console.log("🎯 Guest session endpoint - Current session:", sessionId);
+    console.log("🎯 Guest session endpoint - Session ID:", sessionId);
 
-    // If no valid session exists, create a new one
-    if (!sessionId || !guestSession) {
-      console.log("🆕 Creating new guest session...");
-      const newSession = new GuestSession();
-      await newSession.save();
-      sessionId = newSession.sessionId;
-      guestSession = newSession;
-
-      console.log("✅ Created new session:", sessionId);
-      res.setHeader("X-New-Guest-Session", sessionId);
-    }
+    // Set response headers for frontend
+    res.setHeader("X-New-Guest-Session", sessionId);
+    res.setHeader("x-new-guest-session", sessionId);
 
     res.json({
       sessionId: sessionId,
       message: "Guest session active",
-      guestSession: guestSession
-        ? {
-            id: guestSession._id,
-            cart: guestSession.cart,
-            createdAt: guestSession.createdAt,
-          }
-        : null,
+      cartItems: guestSession?.cart?.length || 0,
+      createdAt: guestSession?.createdAt,
     });
   } catch (error) {
     console.error("💥 Guest session endpoint error:", error);
     res.status(500).json({ error: "Failed to get guest session" });
   }
+});
+
+// ADD THIS ROUTE FOR DEBUGGING
+router.get("/debug", (req, res) => {
+  res.json({
+    headers: req.headers,
+    "x-guest-session-received": req.headers["x-guest-session"],
+    "x-guest-session-id-received": req.headers["x-guest-session-id"],
+  });
 });
 
 export default router;

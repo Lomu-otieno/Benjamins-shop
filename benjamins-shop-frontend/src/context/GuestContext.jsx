@@ -1,4 +1,4 @@
-// src/context/GuestContext.jsx - FIXED VERSION
+// src/context/GuestContext.jsx - ENHANCED VERSION
 import React, {
   createContext,
   useContext,
@@ -23,6 +23,8 @@ const GuestProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [backendAvailable, setBackendAvailable] = useState(true);
   const initialized = useRef(false);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     if (initialized.current) return;
@@ -34,8 +36,8 @@ const GuestProvider = ({ children }) => {
   const initializeGuestSession = async () => {
     try {
       console.log("🚀 Starting guest session initialization...");
+      retryCount.current = 0;
 
-      // Check for existing session in localStorage
       const existingSessionId = localStorage.getItem("guestSessionId");
 
       if (existingSessionId) {
@@ -43,41 +45,63 @@ const GuestProvider = ({ children }) => {
           "📋 Found existing session in localStorage:",
           existingSessionId
         );
-
-        // ✅ CRITICAL FIX: Always validate with backend
-        console.log("🔍 Validating session with backend...");
-        try {
-          const response = await guestAPI.getSession();
-          const backendSessionId = response.data.sessionId;
-
-          console.log("✅ Session validated with backend:", backendSessionId);
-
-          // Update localStorage with the session ID from backend (in case it changed)
-          if (backendSessionId !== existingSessionId) {
-            console.log("🔄 Session ID updated from backend");
-            localStorage.setItem("guestSessionId", backendSessionId);
-            setSessionId(backendSessionId);
-          } else {
-            setSessionId(existingSessionId);
-          }
-
-          setBackendAvailable(true);
-          setLoading(false);
-          return;
-        } catch (error) {
-          console.error("❌ Session validation failed:", error);
-          // If validation fails, the session might be invalid
-          await createNewSession();
-          return;
-        }
+        await validateAndSetSession(existingSessionId);
       } else {
-        // No session exists - create new one
         console.log("🆕 No existing session, creating new...");
         await createNewSession();
       }
     } catch (error) {
       console.error("❌ Guest session initialization error:", error);
       await handleInitializationError();
+    }
+  };
+
+  const validateAndSetSession = async (sessionIdToValidate) => {
+    try {
+      console.log("🔍 Validating session with backend:", sessionIdToValidate);
+      const response = await guestAPI.getSession();
+      const backendSessionId = response.data.sessionId;
+
+      console.log("✅ Session validated:", backendSessionId);
+
+      // Update if backend returned a different session (duplicate resolved)
+      if (backendSessionId !== sessionIdToValidate) {
+        console.log("🔄 Session ID updated from backend (duplicate resolved)");
+        localStorage.setItem("guestSessionId", backendSessionId);
+        setSessionId(backendSessionId);
+      } else {
+        setSessionId(sessionIdToValidate);
+      }
+
+      setBackendAvailable(true);
+      setLoading(false);
+    } catch (error) {
+      console.error("❌ Session validation failed:", error);
+
+      // Retry logic for transient errors
+      if (retryCount.current < maxRetries && error.response?.status !== 404) {
+        retryCount.current += 1;
+        console.log(
+          `🔄 Retrying session validation (${retryCount.current}/${maxRetries})...`
+        );
+        setTimeout(
+          () => validateAndSetSession(sessionIdToValidate),
+          1000 * retryCount.current
+        );
+        return;
+      }
+
+      // If validation consistently fails, create new session
+      if (error.response?.status === 404) {
+        console.log("🗑️ Session not found in backend, creating new one...");
+        await createNewSession();
+      } else {
+        // Network or other errors - use existing session but mark backend as down
+        console.log("🌐 Backend unavailable, using local session");
+        setSessionId(sessionIdToValidate);
+        setBackendAvailable(false);
+        setLoading(false);
+      }
     }
   };
 
@@ -100,12 +124,13 @@ const GuestProvider = ({ children }) => {
   };
 
   const handleInitializationError = async () => {
-    // Only use fallback if absolutely necessary
     const existingSessionId = localStorage.getItem("guestSessionId");
     if (!existingSessionId) {
-      const fallbackSessionId =
-        "guest_fallback_" + Math.random().toString(36).substr(2, 9);
-      console.log("🆘 Creating fallback session:", fallbackSessionId);
+      // Use a more unique fallback
+      const fallbackSessionId = `guest_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      console.log("🆘 Creating unique fallback session:", fallbackSessionId);
       localStorage.setItem("guestSessionId", fallbackSessionId);
       setSessionId(fallbackSessionId);
     } else {
@@ -120,11 +145,18 @@ const GuestProvider = ({ children }) => {
     await initializeGuestSession();
   };
 
+  const clearSession = () => {
+    localStorage.removeItem("guestSessionId");
+    setSessionId(null);
+    initializeGuestSession(); // Create fresh session
+  };
+
   const value = {
     sessionId,
     loading,
     backendAvailable,
     refreshSession,
+    clearSession, // Add method to clear duplicates
   };
 
   return (

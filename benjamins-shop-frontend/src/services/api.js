@@ -1,4 +1,4 @@
-// src/services/api.js - FIXED VERSION
+// src/services/api.js - ENHANCED VERSION
 import axios from "axios";
 
 const API_BASE = "https://benjamins-shop.onrender.com/api";
@@ -8,24 +8,24 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ✅ FIXED: Use the correct header name that backend expects
+// ✅ IMPROVED Request Interceptor
 api.interceptors.request.use((config) => {
   const requiresGuestSession =
     config.url?.includes("/cart") ||
     config.url?.includes("/orders") ||
-    config.url?.includes("/guest/session");
+    config.url?.includes("/guest/session"); // ✅ Include guest session route!
 
   if (requiresGuestSession) {
     const sessionId = localStorage.getItem("guestSessionId");
     if (sessionId) {
-      // ✅ USE THE HEADER YOUR BACKEND EXPECTS
+      // ✅ Use the header name your backend expects
       config.headers["X-Guest-Session-Id"] = sessionId;
-      console.log(
-        "🔑 Adding guest session header (X-Guest-Session-Id):",
-        sessionId
-      );
+      console.log("🔑 Adding guest session header to:", config.url, sessionId);
+    } else {
+      console.warn("⚠️ No session ID found for:", config.url);
     }
   }
+
   return config;
 });
 
@@ -34,11 +34,23 @@ api.interceptors.response.use(
   (response) => {
     console.log(`✅ API Success: ${response.config.url}`);
 
-    // Check if response contains a new session ID
+    // Handle session updates from backend
+    const newSessionHeader =
+      response.headers["x-new-guest-session"] ||
+      response.headers["X-New-Guest-Session"];
+
+    if (newSessionHeader) {
+      const currentSessionId = localStorage.getItem("guestSessionId");
+      if (newSessionHeader !== currentSessionId) {
+        console.log("🔄 Updating session ID from header:", newSessionHeader);
+        localStorage.setItem("guestSessionId", newSessionHeader);
+      }
+    }
+
+    // Also check response data for session ID
     if (response.data?.sessionId) {
       const newSessionId = response.data.sessionId;
       const currentSessionId = localStorage.getItem("guestSessionId");
-
       if (newSessionId !== currentSessionId) {
         console.log("🔄 Updating session ID from response:", newSessionId);
         localStorage.setItem("guestSessionId", newSessionId);
@@ -48,12 +60,16 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error("❌ API Error:", error.response?.status, error.message);
+    console.error("❌ API Error:", {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message,
+    });
 
     // Handle session-related errors
     if (error.response?.status === 401 || error.response?.status === 404) {
-      console.log("🔄 Session invalid, clearing localStorage...");
-      localStorage.removeItem("guestSessionId");
+      console.log("🔄 Session invalid, may need to refresh...");
+      // Don't clear localStorage here - let GuestContext handle it
     }
 
     return Promise.reject(error);
@@ -92,7 +108,7 @@ export const ordersAPI = {
 // Guest API
 export const guestAPI = {
   getSession: () => {
-    console.log("👤 Getting guest session...");
+    console.log("👤 Getting/validating guest session...");
     return api.get("/guest/session");
   },
 };

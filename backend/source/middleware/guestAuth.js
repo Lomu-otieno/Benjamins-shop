@@ -1,11 +1,13 @@
-// middleware/guestAuth.js - UPDATED
+// middleware/guestAuth.js - ADD DEBUG LOGGING
 import GuestSession from "../models/GuestSession.js";
 
 const guestAuth = async (req, res, next) => {
   try {
-    console.log("🔍 Guest Auth - Headers received:", Object.keys(req.headers));
+    console.log("🔍 Guest Auth - Headers:", {
+      "x-guest-session": req.headers["x-guest-session"],
+      "x-guest-session-id": req.headers["x-guest-session-id"],
+    });
 
-    // ✅ ACCEPT BOTH HEADER NAMES
     let sessionId =
       req.headers["x-guest-session"] ||
       req.headers["x-guest-session-id"] ||
@@ -14,19 +16,16 @@ const guestAuth = async (req, res, next) => {
     console.log("🔍 Extracted sessionId:", sessionId);
 
     if (!sessionId) {
-      console.log("🆕 No session ID found, creating new session...");
+      console.log("🆕 No session ID in request, creating new session...");
       const newSession = new GuestSession();
       await newSession.save();
       sessionId = newSession.sessionId;
 
-      console.log("✅ New session created:", sessionId);
-
-      // Set headers for frontend (both cases)
+      console.log("✅ Created NEW session:", sessionId);
       res.setHeader("X-New-Guest-Session", sessionId);
-      res.setHeader("x-new-guest-session", sessionId);
       req.guestSession = newSession;
     } else {
-      console.log("🔍 Looking for existing session:", sessionId);
+      console.log("🔍 Looking for existing session in DB:", sessionId);
       const session = await GuestSession.findOne({ sessionId }).populate(
         "cart.product"
       );
@@ -36,19 +35,19 @@ const guestAuth = async (req, res, next) => {
         const newSession = new GuestSession();
         await newSession.save();
         sessionId = newSession.sessionId;
-
-        // Set headers for frontend (both cases)
         res.setHeader("X-New-Guest-Session", sessionId);
-        res.setHeader("x-new-guest-session", sessionId);
         req.guestSession = newSession;
       } else {
-        console.log("✅ Existing session found");
+        console.log(
+          "✅ Found EXISTING session, cart items:",
+          session.cart.length
+        );
         req.guestSession = session;
       }
     }
 
     req.sessionId = sessionId;
-    console.log("🔍 Final sessionId being used:", sessionId);
+    console.log("🎯 Final session ID:", sessionId);
     next();
   } catch (error) {
     console.error("❌ Guest auth error:", error);

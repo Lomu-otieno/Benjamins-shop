@@ -11,17 +11,21 @@ router.get("/session", guestAuth, async (req, res) => {
     const sessionId = req.sessionId;
     const guestSession = req.guestSession;
 
-    console.log("🎯 Guest session endpoint - Session ID:", sessionId);
+    console.log("🎯 Guest session endpoint - Session:", sessionId);
+    console.log("📦 Cart items:", guestSession?.cart?.length || 0);
 
-    // Set response headers for frontend
-    res.setHeader("X-New-Guest-Session", sessionId);
-    res.setHeader("x-new-guest-session", sessionId);
-
+    // Always return the current session (existing or new)
     res.json({
       sessionId: sessionId,
       message: "Guest session active",
       cartItems: guestSession?.cart?.length || 0,
       createdAt: guestSession?.createdAt,
+      // Include the session object for debugging
+      session: {
+        id: guestSession._id,
+        cart: guestSession.cart,
+        expiresAt: guestSession.expiresAt,
+      },
     });
   } catch (error) {
     console.error("💥 Guest session endpoint error:", error);

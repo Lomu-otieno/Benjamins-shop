@@ -10,6 +10,7 @@ import cartRoutes from "./routes/cart.js";
 import orderRoutes from "./routes/orders.js";
 import guestRoutes from "./routes/guest.js";
 import uploadRoutes from "./routes/upload.js";
+import cleanupDuplicateSessions from "./utils/cleanupSessions.js";
 
 dotenv.config();
 
@@ -17,7 +18,10 @@ const app = express();
 
 // Connect to database
 connectDB();
-
+connectDB().then(() => {
+  // Start duplicate cleanup
+  cleanupDuplicateSessions();
+});
 // Middleware
 app.use(
   cors({

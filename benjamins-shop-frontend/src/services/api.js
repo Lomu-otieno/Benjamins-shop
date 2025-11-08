@@ -1,95 +1,103 @@
-// src/services/api.js
+// src/services/api.js - FIXED VERSION
 import axios from "axios";
 
 const API_BASE = "https://benjamins-shop.onrender.com/api";
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
-  withCredentials: false,
 });
 
-// Enhanced request interceptor - only add guest session for cart/orders
+// ✅ FIXED: Use the correct header name that backend expects
 api.interceptors.request.use((config) => {
-  config.timeout = 10000;
-  config.timeoutErrorMessage = "Request timeout - please try again";
-
   const requiresGuestSession =
-    config.url?.includes("/cart") || config.url?.includes("/orders");
+    config.url?.includes("/cart") ||
+    config.url?.includes("/orders") ||
+    config.url?.includes("/guest/session"); // Include guest session route too!
+
   if (requiresGuestSession) {
     const sessionId = localStorage.getItem("guestSessionId");
     if (sessionId) {
-      config.headers["X-Guest-Session-Id"] = sessionId;
+      // ✅ CORRECT HEADER NAME: backend expects "x-guest-session"
+      config.headers["x-guest-session"] = sessionId;
+      console.log("🔑 Adding guest session header:", sessionId);
+    } else {
+      console.warn(
+        "⚠️ No session ID found for request that requires it:",
+        config.url
+      );
     }
   }
+
   return config;
 });
 
-// Response interceptor
+// Enhanced response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Success: ${response.status} ${response.config.url}`);
+    console.log(`✅ API Success: ${response.config.url}`);
 
-    // Check for new session ID in response headers OR data
-    const headerSessionId = response.headers["x-new-guest-session"];
-    const dataSessionId = response.data?.sessionId;
+    // Check if response contains a new session ID
+    if (response.data?.sessionId) {
+      const newSessionId = response.data.sessionId;
+      const currentSessionId = localStorage.getItem("guestSessionId");
 
-    if (headerSessionId) {
-      console.log("Updating session ID from header:", headerSessionId);
-      localStorage.setItem("guestSessionId", headerSessionId);
-    } else if (dataSessionId) {
-      console.log("Updating session ID from response data:", dataSessionId);
-      localStorage.setItem("guestSessionId", dataSessionId);
+      if (newSessionId !== currentSessionId) {
+        console.log("🔄 Updating session ID from response:", newSessionId);
+        localStorage.setItem("guestSessionId", newSessionId);
+      }
     }
 
     return response;
   },
   (error) => {
-    if (error.code === "ECONNABORTED") {
-      error.message = "Request timed out. Please try again.";
+    console.error("❌ API Error:", error.response?.status, error.message);
+
+    // Handle session-related errors
+    if (error.response?.status === 401 || error.response?.status === 404) {
+      console.log("🔄 Session invalid, clearing localStorage...");
+      localStorage.removeItem("guestSessionId");
     }
-    console.error("❌ API Error:", error.message);
+
     return Promise.reject(error);
   }
 );
 
-// Products API - public routes, no guest session needed
+// Products API
 export const productsAPI = {
   getAll: (filters = {}) => api.get("/products", { params: filters }),
   getById: (id) => api.get(`/products/${id}`),
 };
 
-// Cart API - requires guest session
+// Cart API
 export const cartAPI = {
-  getCart: () => api.get("/cart"),
-  addToCart: (productId, quantity) =>
-    api.post("/cart", { productId, quantity }),
+  getCart: () => {
+    console.log("🛒 Getting cart...");
+    return api.get("/cart");
+  },
+  addToCart: (productId, quantity) => {
+    console.log("🛒 Adding to cart:", productId, quantity);
+    return api.post("/cart", { productId, quantity });
+  },
   updateCartItem: (productId, quantity) =>
     api.put(`/cart/${productId}`, { quantity }),
   removeFromCart: (productId) => api.delete(`/cart/${productId}`),
   clearCart: () => api.delete("/cart"),
 };
 
-// Orders API - requires guest session
+// Orders API
 export const ordersAPI = {
-  create: async (orderData) => {
-    try {
-      const response = await api.post("/orders", orderData);
-      return response;
-    } catch (error) {
-      if (error.response?.status === 408) {
-        throw new Error(
-          "Order creation timed out. Please check your cart and try again."
-        );
-      }
-      throw error;
-    }
-  },
+  create: (orderData) => api.post("/orders", orderData),
+  getByOrderNumber: (orderNumber) => api.get(`/orders/${orderNumber}`),
+  getBySession: (sessionId) => api.get(`/orders/guest/${sessionId}`),
 };
-// Guest API - requires guest session
+
+// Guest API
 export const guestAPI = {
-  getSession: () => api.get("/guest/session"),
+  getSession: () => {
+    console.log("👤 Getting guest session...");
+    return api.get("/guest/session");
+  },
 };
 
 export default api;

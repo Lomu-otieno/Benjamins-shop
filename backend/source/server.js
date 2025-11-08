@@ -23,22 +23,28 @@ app.use(
   cors({
     origin: [
       process.env.LOCALHOST,
-      process.env.FRONTEND_URI,
+      process.env.FRONTEND_URI_ONE,
+      process.env.FRONTEND_URI_TWO,
+      process.env.FRONTEND_URI_THREE,
       process.env.PASSWORD_URI,
       process.env.SERVER_URI,
       process.env.LIVE_FRONTEND,
-      "http://localhost:5500", // Add this explicitly
-      "http://127.0.0.1:5500", // Add this for localhost IP
+      "http://localhost:5173",
+      "http://localhost:5500",
+      "http://127.0.0.1:5500",
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: [
       "Content-Type",
       "Authorization",
       "X-Guest-Session-Id",
+      "x-guest-session",
       "X-Requested-With",
+      "x-admin-token",
     ],
     credentials: true,
     optionsSuccessStatus: 200,
+    exposedHeaders: ["X-New-Guest-Session", "x-new-guest-session"],
   })
 );
 app.use(express.json());

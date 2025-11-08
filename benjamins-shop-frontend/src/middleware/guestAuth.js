@@ -1,16 +1,9 @@
-// middleware/guestAuth.js - UPDATED
-import GuestSession from "../models/GuestSession.js";
-
+// middleware/guestAuth.js - ADD DEBUG LOGGING
 const guestAuth = async (req, res, next) => {
   try {
-    console.log("🔍 Guest Auth - Headers received:", Object.keys(req.headers));
+    console.log("🔍 Guest Auth - Headers received:", req.headers);
 
-    // ✅ ACCEPT BOTH HEADER NAMES
-    let sessionId =
-      req.headers["x-guest-session"] ||
-      req.headers["x-guest-session-id"] ||
-      req.cookies?.guestSession;
-
+    let sessionId = req.headers["x-guest-session"] || req.cookies?.guestSession;
     console.log("🔍 Extracted sessionId:", sessionId);
 
     if (!sessionId) {
@@ -21,8 +14,7 @@ const guestAuth = async (req, res, next) => {
 
       console.log("✅ New session created:", sessionId);
 
-      // Set headers for frontend (both cases)
-      res.setHeader("X-New-Guest-Session", sessionId);
+      // Set headers for frontend
       res.setHeader("x-new-guest-session", sessionId);
       req.guestSession = newSession;
     } else {
@@ -36,9 +28,6 @@ const guestAuth = async (req, res, next) => {
         const newSession = new GuestSession();
         await newSession.save();
         sessionId = newSession.sessionId;
-
-        // Set headers for frontend (both cases)
-        res.setHeader("X-New-Guest-Session", sessionId);
         res.setHeader("x-new-guest-session", sessionId);
         req.guestSession = newSession;
       } else {
@@ -55,5 +44,3 @@ const guestAuth = async (req, res, next) => {
     res.status(500).json({ error: "Authentication failed" });
   }
 };
-
-export default guestAuth;

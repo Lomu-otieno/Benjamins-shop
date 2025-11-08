@@ -17,11 +17,10 @@ dotenv.config();
 const app = express();
 
 // Connect to database
-connectDB();
 connectDB().then(() => {
-  // Start duplicate cleanup
   cleanupDuplicateSessions();
 });
+
 // Middleware
 app.use(
   cors({

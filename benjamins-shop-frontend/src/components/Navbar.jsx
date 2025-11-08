@@ -1,11 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Search } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useGuest } from "../context/useGuest"; // ✅ Add import
 
 const Navbar = () => {
   const { getCartCount } = useCart();
-
+  const { sessionId } = useGuest();
   return (
     <nav className="navbar">
       <div className="nav-container">
@@ -13,13 +14,12 @@ const Navbar = () => {
           Benjamin's Shop
         </Link>
 
-        {/* <div className="nav-search">
-          <input type="text" placeholder="Search products..." />
-          <Search size={20} />
-        </div> */}
+        {/* Example: If you want to show the session for debugging */}
+        {/* <small style={{ color: "#ccc" }}>Session: {sessionId}</small> */}
 
         <div className="nav-links">
           <Link to="/products">Products</Link>
+
           <Link to="/cart" className="cart-link">
             <ShoppingCart size={20} />
             <span className="cart-count">{getCartCount()}</span>

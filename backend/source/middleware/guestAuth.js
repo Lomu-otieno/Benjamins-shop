@@ -30,9 +30,14 @@ const guestAuth = async (req, res, next) => {
       req.guestSession = newSession;
     } else {
       console.log("🔍 Looking for existing session in DB:", sessionId);
-      const session = await GuestSession.findOne({ sessionId }).populate(
-        "cart.product"
-      );
+      let session = await GuestSession.findOne({ sessionId });
+
+      if (!session) {
+        session = await GuestSession.findOne({
+          userAgent: req.headers["user-agent"],
+          ipAddress: req.ip,
+        }).sort({ createdAt: -1 });
+      }
 
       if (!session) {
         console.log(

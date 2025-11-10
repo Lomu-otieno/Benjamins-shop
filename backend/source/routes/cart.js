@@ -29,14 +29,13 @@ router.post("/", async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
-    // Quick existence check without full product data
     const productExists = await Product.exists({ _id: productId });
     if (!productExists) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Use MongoDB update operations instead of find-save pattern
-    const session = await GuestSession.findOneAndUpdate(
+    // Try to update quantity if item already exists
+    let session = await GuestSession.findOneAndUpdate(
       {
         sessionId: req.sessionId,
         "cart.product": productId,
@@ -47,21 +46,18 @@ router.post("/", async (req, res) => {
       { new: true }
     );
 
-    let updatedSession;
-    if (!session) {
-      // Item doesn't exist, add new one
-      updatedSession = await GuestSession.findOneAndUpdate(
-        { sessionId: req.sessionId },
-        {
-          $push: { cart: { product: productId, quantity } },
+    // If item wasn't in cart, push new item (CREATE session if missing)
+    session = await GuestSession.findOneAndUpdate(
+      { sessionId: req.sessionId },
+      {
+        $setOnInsert: {
+          sessionId: req.sessionId,
         },
-        { new: true }
-      );
-    } else {
-      updatedSession = session;
-    }
+        $push: session ? {} : { cart: { product: productId, quantity } },
+      },
+      { new: true, upsert: true } // ✅ <-- Fix here
+    );
 
-    // Return populated cart
     const populatedSession = await GuestSession.findOne(
       { sessionId: req.sessionId },
       { cart: 1 }

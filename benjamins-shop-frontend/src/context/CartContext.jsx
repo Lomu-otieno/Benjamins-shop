@@ -1,6 +1,6 @@
-// src/context/CartContext.jsx - Updated with fallback
+// src/context/CartContext.jsx
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { cartAPI } from "../services/api";
+import { cartAPI, guestAPI } from "../services/api";
 
 const CartContext = createContext();
 
@@ -9,9 +9,7 @@ const cartReducer = (state, action) => {
     case "SET_CART":
       return { ...state, items: action.payload, loading: false };
     case "ADD_ITEM":
-      return { ...state, items: action.payload };
     case "UPDATE_ITEM":
-      return { ...state, items: action.payload };
     case "REMOVE_ITEM":
       return { ...state, items: action.payload };
     case "CLEAR_CART":
@@ -25,7 +23,7 @@ const cartReducer = (state, action) => {
   }
 };
 
-const useCart = () => {
+export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error("useCart must be used within a CartProvider");
@@ -33,7 +31,7 @@ const useCart = () => {
   return context;
 };
 
-// Local storage fallback functions
+// Local storage fallback
 const getLocalCart = () => {
   try {
     const localCart = localStorage.getItem("localCart");
@@ -51,7 +49,7 @@ const saveLocalCart = (cartItems) => {
   }
 };
 
-const CartProvider = ({ children }) => {
+export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     loading: false,
@@ -59,24 +57,21 @@ const CartProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    fetchCart();
+    initializeSessionAndCart();
   }, []);
 
-  const fetchCart = async () => {
+  const initializeSessionAndCart = async () => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
 
-      // Try backend first
+      // ✅ Ensure session exists before requesting cart
+      await guestAPI.getSession();
+
       const cart = await cartAPI.getCart();
       dispatch({ type: "SET_CART", payload: cart.data });
-      console.log("✅ Cart loaded from backend");
+      console.log("✅ Cart loaded from backend after session restore");
     } catch (error) {
-      console.log(
-        "❌ Backend cart failed, using local storage:",
-        error.message
-      );
-
-      // Fallback to local storage
+      console.log("❌ Using local fallback cart:", error.message);
       const localCart = getLocalCart();
       dispatch({ type: "SET_CART", payload: localCart });
     }
@@ -84,35 +79,26 @@ const CartProvider = ({ children }) => {
 
   const addToCart = async (productId, quantity = 1) => {
     try {
-      // Try backend first
       const response = await cartAPI.addToCart(productId, quantity);
       dispatch({ type: "ADD_ITEM", payload: response.data });
       return true;
     } catch (error) {
       console.log("❌ Backend add failed, using local storage:", error.message);
 
-      // Fallback to local storage
       const currentItems = state.items;
-      const existingItemIndex = currentItems.findIndex(
+      const existingItem = currentItems.find(
         (item) => item.product?._id === productId
       );
 
       let newItems;
-      if (existingItemIndex >= 0) {
-        newItems = currentItems.map((item, index) =>
-          index === existingItemIndex
+      if (existingItem) {
+        newItems = currentItems.map((item) =>
+          item.product?._id === productId
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       } else {
-        newItems = [
-          ...currentItems,
-          {
-            product: { _id: productId },
-            quantity,
-            // Note: We don't have full product details in local storage
-          },
-        ];
+        newItems = [...currentItems, { product: { _id: productId }, quantity }];
       }
 
       dispatch({ type: "ADD_ITEM", payload: newItems });
@@ -131,7 +117,6 @@ const CartProvider = ({ children }) => {
         error.message
       );
 
-      // Fallback to local storage
       const newItems =
         quantity <= 0
           ? state.items.filter((item) => item.product?._id !== productId)
@@ -154,7 +139,6 @@ const CartProvider = ({ children }) => {
         error.message
       );
 
-      // Fallback to local storage
       const newItems = state.items.filter(
         (item) => item.product?._id !== productId
       );
@@ -173,36 +157,34 @@ const CartProvider = ({ children }) => {
         error.message
       );
 
-      // Fallback to local storage
       dispatch({ type: "CLEAR_CART" });
       saveLocalCart([]);
     }
   };
 
-  const getCartTotal = () => {
-    return state.items.reduce((total, item) => {
-      return total + item.product?.price * item.quantity;
-    }, 0);
-  };
+  const getCartTotal = () =>
+    state.items.reduce(
+      (total, item) => total + (item.product?.price || 0) * item.quantity,
+      0
+    );
 
-  const getCartCount = () => {
-    return state.items.reduce((count, item) => count + item.quantity, 0);
-  };
+  const getCartCount = () =>
+    state.items.reduce((count, item) => count + item.quantity, 0);
 
-  const value = {
-    items: state.items,
-    loading: state.loading,
-    error: state.error,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    fetchCart,
-    getCartTotal,
-    getCartCount,
-  };
-
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider
+      value={{
+        items: state.items,
+        loading: state.loading,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        getCartTotal,
+        getCartCount,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  );
 };
-
-export { CartProvider, useCart };

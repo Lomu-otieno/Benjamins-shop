@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx - UPDATED
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
@@ -18,7 +18,9 @@ function App() {
   return (
     <GuestProvider>
       <CartProvider>
-        <Router>
+        <Router basename="/">
+          {" "}
+          {/* ✅ Ensure basename is "/" */}
           <div className="app">
             <Navbar />
             <main className="main-content">
@@ -33,6 +35,8 @@ function App() {
                   element={<OrderConfirmation />}
                 />
                 <Route path="/admin/*" element={<Admin />} />
+                {/* ✅ Add a catch-all route for 404s */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
             <Footer />
@@ -42,5 +46,16 @@ function App() {
     </GuestProvider>
   );
 }
+
+// ✅ Add a simple NotFound component
+const NotFound = () => {
+  return (
+    <div style={{ padding: "2rem", textAlign: "center" }}>
+      <h1>404 - Page Not Found</h1>
+      <p>The page you're looking for doesn't exist.</p>
+      <a href="/">Go back home</a>
+    </div>
+  );
+};
 
 export default App;

@@ -33,8 +33,8 @@ app.use(
       process.env.SERVER_URI,
       process.env.VITE_URI,
       process.env.LIVE_FRONTEND,
-      "https://benjamins-shop-54vbkrl8u-jonah-lomus-projects.vercel.app", // your deployed frontend
-      "https://benjamins-shop-jaowuy8ce-jonah-lomus-projects.vercel.app", // fallback / alternate deployed frontend
+      "https://benjamins-shop-54vbkrl8u-jonah-lomus-projects.vercel.app",
+      "https://benjamins-shop-jaowuy8ce-jonah-lomus-projects.vercel.app",
       "http://localhost:5173",
       "http://localhost:5500",
       "http://127.0.0.1:5500",

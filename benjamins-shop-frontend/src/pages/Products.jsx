@@ -4,6 +4,7 @@ import { productsAPI } from "../services/api";
 import ProductCard from "../components/ProductCard";
 import SearchFilters from "../components/SearchFilters";
 import "../styles/Products.css";
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,6 @@ const Products = () => {
       setLoading(true);
       setError(null);
       const response = await productsAPI.getAll(filters);
-      console.log("Products data:", response.data); // Debug log
       setProducts(response.data.products);
       setPagination({
         totalPages: response.data.totalPages,
@@ -48,20 +48,10 @@ const Products = () => {
     setFilters((prev) => ({ ...prev, page: newPage }));
   };
 
-  if (loading) {
-    return (
-      <div className="products-page">
-        <div className="container">
-          <div className="loading">Loading products...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="products-page">
       <div className="container">
-        <h1>Our Products</h1>
+        <h1 className="page-title">Our Products</h1>
 
         {error && (
           <div className="error-message">
@@ -74,40 +64,46 @@ const Products = () => {
 
         <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 
-        <div className="products-grid">
-          {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="loading">Loading products...</div>
+        ) : (
+          <>
+            <div className="products-grid">
+              {products.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </div>
 
-        {products.length === 0 && !error && (
-          <div className="no-products">
-            <p>No products found matching your criteria.</p>
-          </div>
-        )}
+            {products.length === 0 && !error && (
+              <div className="no-products">
+                <p>No products found matching your criteria.</p>
+              </div>
+            )}
 
-        {pagination.totalPages > 1 && (
-          <div className="pagination">
-            <button
-              disabled={filters.page === 1}
-              onClick={() => handlePageChange(filters.page - 1)}
-              className="pagination-btn"
-            >
-              Previous
-            </button>
+            {pagination.totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  disabled={filters.page === 1}
+                  onClick={() => handlePageChange(filters.page - 1)}
+                  className="pagination-btn"
+                >
+                  ← Previous
+                </button>
 
-            <span className="pagination-info">
-              Page {filters.page} of {pagination.totalPages}
-            </span>
+                <span className="pagination-info">
+                  Page {filters.page} of {pagination.totalPages}
+                </span>
 
-            <button
-              disabled={filters.page === pagination.totalPages}
-              onClick={() => handlePageChange(filters.page + 1)}
-              className="pagination-btn"
-            >
-              Next
-            </button>
-          </div>
+                <button
+                  disabled={filters.page === pagination.totalPages}
+                  onClick={() => handlePageChange(filters.page + 1)}
+                  className="pagination-btn"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

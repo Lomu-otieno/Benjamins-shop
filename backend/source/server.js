@@ -33,6 +33,7 @@ app.use(
       process.env.SERVER_URI,
       process.env.VITE_URI,
       process.env.LIVE_FRONTEND,
+      process.env.DEPLOYED_FRONTEND,
       "http://localhost:5173",
       "http://localhost:5500",
       "http://127.0.0.1:5500",

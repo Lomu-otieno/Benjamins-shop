@@ -59,21 +59,40 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     initializeSessionAndCart();
   }, []);
-
   const initializeSessionAndCart = async () => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
 
-      // ✅ Ensure session exists before requesting cart
+      // ensure session
       await guestAPI.getSession();
 
-      const cart = await cartAPI.getCart();
-      dispatch({ type: "SET_CART", payload: cart.data });
-      console.log("✅ Cart loaded from backend after session restore");
+      const backendCart = (await cartAPI.getCart()).data;
+      const localCart = getLocalCart();
+
+      // Merge backend and local cart
+      const mergedCart = [...backendCart];
+      localCart.forEach((localItem) => {
+        const exists = mergedCart.find(
+          (item) => item.product?._id === localItem.product?._id
+        );
+        if (exists) {
+          exists.quantity += localItem.quantity; // merge quantities
+        } else {
+          mergedCart.push(localItem);
+        }
+      });
+
+      // Optionally, push mergedCart to backend
+      for (const item of mergedCart) {
+        await cartAPI.addToCart(item.product._id, item.quantity);
+      }
+
+      dispatch({ type: "SET_CART", payload: mergedCart });
+      saveLocalCart(mergedCart);
+      console.log("✅ Cart merged successfully");
     } catch (error) {
       console.log("❌ Using local fallback cart:", error.message);
-      const localCart = getLocalCart();
-      dispatch({ type: "SET_CART", payload: localCart });
+      dispatch({ type: "SET_CART", payload: getLocalCart() });
     }
   };
 

@@ -226,3 +226,146 @@
   .distance-info {
     animation: pulse 2s infinite;
   }
+
+  /* src/styles/location.css */
+/* ... existing styles ... */
+
+/* Map Styles */
+.map-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 100%;
+  }
+  
+  .interactive-map {
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1rem 0;
+    border: 2px solid #e9ecef;
+  }
+  
+  .map-features {
+    margin-top: 1rem;
+  }
+  
+  .map-legend {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+  }
+  
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+  }
+  
+  .shop-marker {
+    background: #e74c3c;
+  }
+  
+  .user-marker {
+    background: #4285f4;
+  }
+  
+  /* Service Area Map */
+  .service-area-map {
+    margin-top: 3rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .service-map-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+  
+  .service-coverage {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .service-coverage h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+  }
+  
+  .service-coverage ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .service-coverage li {
+    padding: 0.5rem 0;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .service-coverage li:last-child {
+    border-bottom: none;
+  }
+  
+  /* Map Loading and Error States */
+  .map-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #6c757d;
+  }
+  
+  .map-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: #dc3545;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .service-map-container {
+      grid-template-columns: 1fr;
+    }
+    
+    .location-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .map-legend {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  
+  /* Animation for interactive elements */
+  .google-map {
+    transition: all 0.3s ease;
+  }
+  
+  .google-map:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  }

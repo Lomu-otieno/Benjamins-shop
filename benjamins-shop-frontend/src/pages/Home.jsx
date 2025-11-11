@@ -7,7 +7,7 @@ import "../styles/location.css";
 const Home = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
-  const [showRoute, setShowRoute] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Shop location coordinates (Maseno, Kenya)
   const shopLocation = {
@@ -23,27 +23,27 @@ const Home = () => {
     },
   };
 
-  // Prepare markers for the map
-  const mapMarkers = [
-    {
-      position: shopLocation,
-      title: "Benjamin's Shop",
-      address: shopLocation.address,
-      phone: shopLocation.phone,
-    },
-  ];
-
-  // Add user location marker if available
-  if (userLocation) {
-    mapMarkers.push({
-      position: userLocation,
-      title: "Your Location",
-      icon: {
-        url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNy41ODYgMiA0IDUuNTg2IDQgMTBDNCAxNS4yNzQgOS4yMTMgMjEuNzYzIDExLjEyNSAyMy43NjZDMTEuMzggMjQuMDc3IDExLjYyIDI0LjA3NyAxMS44NzUgMjMuNzY2QzEzLjc4NyAyMS43NjMgMTkgMTUuMjc0IDE5IDEwQzE5IDUuNTg2IDE1LjQxNCAyIDEyIDJaTTEyIDEzQzEwLjM0MzEgMTMgOSAxMS42NTY5IDkgMTBDOSA4LjM0MzEgMTAuMzQzMSA3IDEyIDdDMTMuNjU2OSA3IDE1IDguMzQzMSAxNSAxMEMxNSAxMS42NTY5IDEzLjY1NjkgMTMgMTIgMTNaIiBmaWxsPSIjNDI4NUY0Ii8+Cjwvc3ZnPgo=",
-        scaledSize: new window.google.maps.Size(32, 32),
+  // Prepare markers for the map - SIMPLIFIED VERSION
+  const getMapMarkers = () => {
+    const markers = [
+      {
+        position: shopLocation,
+        title: "Benjamin's Shop",
+        address: shopLocation.address,
+        phone: shopLocation.phone,
       },
-    });
-  }
+    ];
+
+    // Add user location marker if available
+    if (userLocation) {
+      markers.push({
+        position: userLocation,
+        title: "Your Location",
+      });
+    }
+
+    return markers;
+  };
 
   useEffect(() => {
     // Get user's location for distance calculation
@@ -104,10 +104,6 @@ const Home = () => {
         "_blank"
       );
     }
-  };
-
-  const handleShowRoute = () => {
-    setShowRoute(!showRoute);
   };
 
   return (
@@ -204,14 +200,6 @@ const Home = () => {
                   >
                     📞 Call Store
                   </button>
-                  {userLocation && (
-                    <button
-                      className="btn btn-outline"
-                      onClick={handleShowRoute}
-                    >
-                      {showRoute ? "🗺️ Hide Route" : "🗺️ Show Route"}
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
@@ -226,7 +214,7 @@ const Home = () => {
                   <MapWrapper
                     center={shopLocation}
                     zoom={15}
-                    markers={mapMarkers}
+                    markers={getMapMarkers()}
                     height="400px"
                   />
                 </div>
@@ -261,15 +249,16 @@ const Home = () => {
                   {
                     position: shopLocation,
                     title: "Benjamin's Shop - Main Store",
+                    address: shopLocation.address,
+                    phone: shopLocation.phone,
                   },
                 ]}
               />
               <div className="service-coverage">
                 <h4>Delivery Coverage</h4>
                 <ul>
-                  <li>✅ Free delivery within 10km radius</li>
-                  <li>✅ Maseno Town and surrounding areas</li>
-                  <li>✅ Luanda Township</li>
+                  <li>✅ Free delivery</li>
+                  <li>✅ Maseno 10Km radius</li>
                   <li>✅ Same-day delivery available</li>
                 </ul>
               </div>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import MapWrapper from "../components/MapWrapper";
+import ImageCarousel from "../components/ImageCarousel";
 import "../styles/location.css";
 
 const Home = () => {
@@ -266,6 +267,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <ImageCarousel />
     </div>
   );
 };

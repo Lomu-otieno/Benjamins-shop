@@ -125,7 +125,7 @@ const Home = () => {
           <div className="features-grid">
             <div className="feature">
               <h3>🚚 Free Shipping</h3>
-              <p>On orders over $50</p>
+              <p>At your door step</p>
             </div>
             <div className="feature">
               <h3>💳 Trust Services</h3>
